@@ -7,6 +7,18 @@ import { getPostDetailsTool, GetPostDetailsInputSchema } from "./tools/post-deta
 import { listCommentsTool, ListCommentsInputSchema } from "./tools/list-comments.js";
 import { getAccountInsightsTool, GetAccountInsightsInputSchema } from "./tools/account-insights.js";
 import { getPostInsightsTool, GetPostInsightsInputSchema } from "./tools/post-insights.js";
+import {
+  previewReplyCommentTool,
+  PreviewReplyCommentInputSchema,
+  executeReplyCommentTool,
+  ExecuteReplyCommentInputSchema,
+} from "./tools/reply-comment.js";
+import {
+  previewModifyCommentTool,
+  PreviewModifyCommentInputSchema,
+  executeModifyCommentTool,
+  ExecuteModifyCommentInputSchema,
+} from "./tools/modify-comment.js";
 import { BaseError } from "./errors/index.js";
 
 export const SERVER_NAME = "mcb-server-instagram";
@@ -128,6 +140,72 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     async (args) => {
       try {
         const result = await getPostInsightsTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 8: Reply to Comment (Preview & Execute)
+  server.tool(
+    previewReplyCommentTool.name,
+    previewReplyCommentTool.description,
+    PreviewReplyCommentInputSchema.shape,
+    async (args) => {
+      try {
+        const result = await previewReplyCommentTool.execute(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    executeReplyCommentTool.name,
+    executeReplyCommentTool.description,
+    ExecuteReplyCommentInputSchema.shape,
+    async (args) => {
+      try {
+        const result = await executeReplyCommentTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 9: Modify / Delete Comment (Preview & Execute)
+  server.tool(
+    previewModifyCommentTool.name,
+    previewModifyCommentTool.description,
+    PreviewModifyCommentInputSchema.shape,
+    async (args) => {
+      try {
+        const result = await previewModifyCommentTool.execute(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    executeModifyCommentTool.name,
+    executeModifyCommentTool.description,
+    ExecuteModifyCommentInputSchema.shape,
+    async (args) => {
+      try {
+        const result = await executeModifyCommentTool.execute(args, provider);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
