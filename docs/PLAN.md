@@ -107,7 +107,7 @@
   - Private repository created (`peiiaratef126-hub/mcb-server-instagram`) and verified as `PRIVATE`.
   - Plan persisted to `docs/PLAN.md`.
 - [x] **0.2 Survey of Existing Servers:** Survey GitHub Instagram MCP servers; document differentiators in `README.md`.
-- [ ] **0.3 Meta Setup Guide:** Write `docs/meta-setup.md`, then pause for manual user Meta App setup and `.env` population.
+- [x] **0.3 Meta Setup Guide:** Write `docs/meta-setup.md`, then pause for manual user Meta App setup and `.env` population.
 - [ ] **0.4 Environment & Monorepo Setup:** Verify tools (Node, Go, Python, Docker, FFmpeg); monorepo structure, Docker Compose with profiles, PostgreSQL, `contracts/`, CI workflows.
 - [ ] **0.5 Configuration Validation:** Feature 19 (`.env` validation with Zod).
 - [ ] **0.6 Error Handling & Provider Abstraction:** Feature 17 v1 (structured logging, unified errors) and Graph API provider abstraction layer.
