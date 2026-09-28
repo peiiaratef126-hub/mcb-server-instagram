@@ -131,13 +131,13 @@
 - [x] **Checkpoint 2 Confirmation**
 
 ### Phase 3: Persistent Service & Go Worker
-- [ ] PostgreSQL schema & migrations (publish queue, quota counter, constraints)
-- [ ] Feature 16: Worker token import, encryption at rest (AES-GCM), auto-refresh daemon
-- [ ] Feature 18: Rate limiting & quota enforcement
-- [ ] Feature 17 (Full): Worker structured logging & error pipeline
-- [ ] Feature 28: Daily insights snapshot runner
-- [ ] Exactly-once queue processing test with concurrent workers
-- [ ] **Checkpoint 3 Confirmation**
+- [x] PostgreSQL schema & migrations (publish queue, quota counter, constraints)
+- [x] Feature 16: Worker token import, encryption at rest (AES-GCM), auto-refresh daemon
+- [x] Feature 18: Rate limiting & quota enforcement
+- [x] Feature 17 (Full): Worker structured logging & error pipeline
+- [x] Feature 28: Daily insights snapshot runner
+- [x] Exactly-once queue processing test with concurrent workers
+- [x] **Checkpoint 3 Confirmation**
 
 ### Phase 4: Media & Publishing
 - [ ] Feature 27: Media hosting & upload flow (resumable vs URL)
