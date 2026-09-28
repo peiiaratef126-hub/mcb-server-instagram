@@ -140,14 +140,14 @@
 - [x] **Checkpoint 3 Confirmation**
 
 ### Phase 4: Media & Publishing
-- [ ] Feature 27: Media hosting & upload flow (resumable vs URL)
-- [ ] Python `media-ai` validation & aspect ratio conversion
-- [ ] Feature 4: Publish Image
-- [ ] Feature 5: Publish Video/Reel
-- [ ] Feature 6: Carousel Post
-- [ ] Feature 15: Post Scheduling
-- [ ] Media validation tests (invalid size/aspect ratio) & end-to-end publish flow test
-- [ ] Prepare release v0.2 (CHANGELOG, version bump, release notes; no external publishing)
+- [x] Feature 27: Media hosting & upload flow (resumable vs URL)
+- [x] Python `media-ai` validation & aspect ratio conversion
+- [x] Feature 4: Publish Image
+- [x] Feature 5: Publish Video/Reel
+- [x] Feature 6: Carousel Post
+- [x] Feature 15: Post Scheduling
+- [x] Media validation tests (invalid size/aspect ratio) & end-to-end publish flow test
+- [x] Prepare release v0.2 (CHANGELOG, version bump, release notes; no external publishing)
 - [ ] **Checkpoint 4 Confirmation**
 
 ### Phase 5: Realtime & Engagement
