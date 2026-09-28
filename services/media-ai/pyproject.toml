@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcb-media-ai"
+version = "0.1.0a0"
+description = "Media validation, FFmpeg conversion, and AI processing service for MCB Server Instagram"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pillow>=10.4.0",
+    "pandas>=2.2.0",
+    "anthropic>=0.39.0",
+    "pydantic>=2.10.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0"
+]

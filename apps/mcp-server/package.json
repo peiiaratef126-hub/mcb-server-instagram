@@ -1,0 +1,27 @@
+{
+  "name": "mcb-server-instagram",
+  "version": "0.1.0-alpha.0",
+  "description": "Model Context Protocol (MCP) server for Instagram Professional accounts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "bin": {
+    "mcb-server-instagram": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

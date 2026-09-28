@@ -1,0 +1,5 @@
+pillow==11.1.0
+pandas==2.2.3
+anthropic==0.49.0
+pydantic==2.10.6
+pytest==8.3.5
