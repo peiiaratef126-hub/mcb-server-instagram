@@ -1,6 +1,6 @@
 {
   "name": "mcb-server-instagram",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0",
   "description": "Model Context Protocol (MCP) server for Instagram Professional accounts",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

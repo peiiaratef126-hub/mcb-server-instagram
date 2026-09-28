@@ -9,6 +9,6 @@ describe("MCP Server Integration (Phase 1)", () => {
 
     expect(server).toBeDefined();
     expect(SERVER_NAME).toBe("mcb-server-instagram");
-    expect(SERVER_VERSION).toBe("0.1.0-alpha.0");
+    expect(SERVER_VERSION).toBe("0.1.0");
   });
 });
