@@ -43,6 +43,22 @@ import {
   executeSchedulePostTool,
   ExecuteSchedulePostInputSchema,
 } from "./tools/schedule-post.js";
+import {
+  getUserTagsTool,
+  GetUserTagsInputSchema,
+  getMentionsTool,
+  GetMentionsInputSchema,
+} from "./tools/mentions-tags.js";
+import {
+  listConversationsTool,
+  ListConversationsInputSchema,
+  getConversationMessagesTool,
+  GetConversationMessagesInputSchema,
+  previewSendDmTool,
+  PreviewSendDmInputSchema,
+  executeSendDmTool,
+  ExecuteSendDmInputSchema,
+} from "./tools/direct-messages.js";
 import { BaseError } from "./errors/index.js";
 
 export const SERVER_NAME = "mcb-server-instagram";
@@ -380,6 +396,110 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     async (args) => {
       try {
         const result = await executeSchedulePostTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 12: Mentions & Tags
+  server.tool(
+    getUserTagsTool.name,
+    getUserTagsTool.description,
+    GetUserTagsInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await getUserTagsTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    getMentionsTool.name,
+    getMentionsTool.description,
+    GetMentionsInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await getMentionsTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 14: Direct Messages (Read & Write with Two-Step Confirmation)
+  server.tool(
+    listConversationsTool.name,
+    listConversationsTool.description,
+    ListConversationsInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await listConversationsTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    getConversationMessagesTool.name,
+    getConversationMessagesTool.description,
+    GetConversationMessagesInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await getConversationMessagesTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    previewSendDmTool.name,
+    previewSendDmTool.description,
+    PreviewSendDmInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await previewSendDmTool.execute(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    executeSendDmTool.name,
+    executeSendDmTool.description,
+    ExecuteSendDmInputSchema.shape,
+    { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await executeSendDmTool.execute(args, provider);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
