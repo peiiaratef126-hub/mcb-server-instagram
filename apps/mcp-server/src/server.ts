@@ -69,6 +69,18 @@ import {
   getCompetitorProfileTool,
   GetCompetitorProfileInputSchema,
 } from "./tools/business-discovery.js";
+import {
+  getBestTimeToPostTool,
+  GetBestTimeToPostInputSchema,
+} from "./tools/best-time.js";
+import {
+  analyzeCommentSentimentTool,
+  AnalyzeCommentSentimentInputSchema,
+} from "./tools/comment-sentiment.js";
+import {
+  generateCaptionAndHashtagsTool,
+  GenerateCaptionInputSchema,
+} from "./tools/caption-generator.js";
 import { BaseError } from "./errors/index.js";
 
 export const SERVER_NAME = "mcb-server-instagram";
@@ -563,6 +575,60 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     async (args) => {
       try {
         const result = await getCompetitorProfileTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 23: Best Time to Post Analytics
+  server.tool(
+    getBestTimeToPostTool.name,
+    getBestTimeToPostTool.description,
+    GetBestTimeToPostInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await getBestTimeToPostTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 24: Comment Sentiment Analysis
+  server.tool(
+    analyzeCommentSentimentTool.name,
+    analyzeCommentSentimentTool.description,
+    AnalyzeCommentSentimentInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await analyzeCommentSentimentTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 22: AI Caption and Hashtags Generation
+  server.tool(
+    generateCaptionAndHashtagsTool.name,
+    generateCaptionAndHashtagsTool.description,
+    GenerateCaptionInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await generateCaptionAndHashtagsTool.execute(args, provider);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
