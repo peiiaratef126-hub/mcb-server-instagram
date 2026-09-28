@@ -12,7 +12,8 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "start": "node dist/index.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "refresh-token": "node dist/cli/refresh-token.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
