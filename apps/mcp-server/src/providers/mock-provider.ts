@@ -170,6 +170,69 @@ export const FIXTURES = {
     recipient_id: "17841411111111111",
     message_id: "m_msg_sent_9999",
   },
+  hashtagSearch: {
+    data: [
+      {
+        id: "17843826142012345",
+      },
+    ],
+  },
+  hashtagRecentMedia: {
+    data: [
+      {
+        id: "17900000000000050",
+        caption: "Loving this sunny day! #nature #outdoors",
+        media_type: "IMAGE",
+        media_url: "https://scontent.cdninstagram.com/v/sample_nature.jpg",
+        permalink: "https://www.instagram.com/p/DB222222222/",
+        timestamp: "2026-09-27T16:00:00+0000",
+        like_count: 154,
+        comments_count: 12,
+      },
+    ],
+  },
+  hashtagTopMedia: {
+    data: [
+      {
+        id: "17900000000000051",
+        caption: "Top viral nature photo of the week! #nature",
+        media_type: "IMAGE",
+        media_url: "https://scontent.cdninstagram.com/v/sample_top_nature.jpg",
+        permalink: "https://www.instagram.com/p/DB333333333/",
+        timestamp: "2026-09-26T12:00:00+0000",
+        like_count: 9840,
+        comments_count: 320,
+      },
+    ],
+  },
+  businessDiscovery: {
+    business_discovery: {
+      id: "17841400000000002",
+      username: "competitor_brand",
+      name: "Competitor Brand Inc.",
+      biography: "Leading industry innovator.",
+      profile_picture_url: "https://scontent.cdninstagram.com/v/competitor_avatar.jpg",
+      followers_count: 89400,
+      follows_count: 312,
+      media_count: 450,
+      website: "https://competitor.com",
+      media: {
+        data: [
+          {
+            id: "17900000000000099",
+            caption: "Our new summer collection is here! #summer #fashion",
+            media_type: "IMAGE",
+            media_url: "https://scontent.cdninstagram.com/v/competitor_post.jpg",
+            permalink: "https://www.instagram.com/p/DB111111111/",
+            timestamp: "2026-09-27T15:00:00+0000",
+            like_count: 1420,
+            comments_count: 88,
+          },
+        ],
+      },
+    },
+    id: "17841400000000000",
+  },
 };
 
 export class MockInstagramGraphProvider implements InstagramGraphProvider {
@@ -202,6 +265,24 @@ export class MockInstagramGraphProvider implements InstagramGraphProvider {
     }
 
     const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
+
+    // Match business discovery
+    if (cleanEndpoint === this.accountId && options?.params?.fields && String(options.params.fields).includes("business_discovery")) {
+      return FIXTURES.businessDiscovery as T;
+    }
+
+    // Match hashtag search
+    if (cleanEndpoint === "ig_hashtag_search") {
+      return FIXTURES.hashtagSearch as T;
+    }
+
+    // Match hashtag media
+    if (cleanEndpoint.includes("/recent_media")) {
+      return FIXTURES.hashtagRecentMedia as T;
+    }
+    if (cleanEndpoint.includes("/top_media")) {
+      return FIXTURES.hashtagTopMedia as T;
+    }
 
     // Match mentions
     if (cleanEndpoint === this.accountId && options?.params?.fields && String(options.params.fields).includes("mentioned_")) {
@@ -241,11 +322,6 @@ export class MockInstagramGraphProvider implements InstagramGraphProvider {
     // Match tags
     if (cleanEndpoint === `${this.accountId}/tags` || cleanEndpoint.endsWith("/tags")) {
       return FIXTURES.tags as T;
-    }
-
-    // Match mentions
-    if (cleanEndpoint === this.accountId && options?.params?.fields && String(options.params.fields).includes("mentioned_")) {
-      return FIXTURES.mentions as T;
     }
 
     // Match conversations
