@@ -13,9 +13,10 @@ Only the latest release and the current `main` branch receive security updates.
 
 MCB Server Instagram handles access to Instagram Professional accounts via official Meta APIs. The following architectural rules protect integrity and privacy:
 
-1. **Two-Step Confirmation Flow:** Every interactive write tool (publishing, scheduling, comment deletion/replies, direct messages) executes in two phases:
-   - A preview step generates the exact proposed payload and an ephemeral confirmation ID.
-   - An execute step requires this confirmation ID to perform the action.
+1. **Two-Step Confirmation Flow & Client "Always Allow":** Every interactive write tool (publishing, scheduling, comment deletion/replies, direct messages) executes in two strict phases:
+   - A preview step (`preview_*`) generates the exact proposed payload, human-readable summary with quoted untrusted text, and an ephemeral 5-minute confirmation ID bound to the specific execute tool name and verified by a SHA-256 payload hash.
+   - An execute step (`execute_*`) requires this single-use `confirmation_id` and burns it immediately upon execution or replay.
+   - **Client "Always Allow" Security Note:** If a user selects "Always allow" for execute tools in an MCP client (such as Claude Desktop), the server-side security invariants cannot be bypassed. The AI agent cannot forge or invent write actions because execute tools accept ONLY a valid, unburned `confirmation_id` with an untampered payload hash. However, we strongly recommend keeping human approval enabled on preview tools so the operator always reviews quoted comment texts, actions, and permanent deletion warnings before execution tokens are granted.
 2. **Untrusted Data Isolation:** All external inputs (comments, captions, DMs, incoming webhooks) are treated strictly as data, never as prompt instructions.
 3. **Secret Protection:** 
    - Never log tokens or sensitive payload details in logs or error traces.

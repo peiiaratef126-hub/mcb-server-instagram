@@ -52,6 +52,7 @@ A survey of existing Instagram MCP projects reveals common pitfalls: reliance on
 ## Security Model
 
 1. **Two-Step Confirmation Flow:** Every interactive write tool (publishing, scheduling, commenting, DMs) uses a two-phase commit: a preview tool yields the exact payload and an expiring one-time confirmation ID; the execute tool requires this valid ID.
+   - *Client "Always Allow" Notice:* In MCP clients like Claude Desktop, setting "Always allow" on execute tools does NOT bypass security: execution strictly requires a fresh, unexpired, single-use `confirmation_id` bound to the tool name and verified against a SHA-256 payload hash. To maintain human-in-the-loop oversight, do not auto-approve preview tools.
 2. **Untrusted Data Handling:** Comments, messages, and external inputs are treated strictly as data, never instructions.
 3. **Token Isolation:** In Full mode, only `core-worker` has access to the encryption key and manages the token at rest. The `gateway` holds zero Instagram access credentials.
 
