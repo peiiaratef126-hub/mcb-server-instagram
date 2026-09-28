@@ -59,6 +59,16 @@ import {
   executeSendDmTool,
   ExecuteSendDmInputSchema,
 } from "./tools/direct-messages.js";
+import {
+  searchHashtagTool,
+  SearchHashtagInputSchema,
+  getHashtagMediaTool,
+  GetHashtagMediaInputSchema,
+} from "./tools/hashtags.js";
+import {
+  getCompetitorProfileTool,
+  GetCompetitorProfileInputSchema,
+} from "./tools/business-discovery.js";
 import { BaseError } from "./errors/index.js";
 
 export const SERVER_NAME = "mcb-server-instagram";
@@ -500,6 +510,59 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     async (args) => {
       try {
         const result = await executeSendDmTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 13: Hashtag Search & Discovery
+  server.tool(
+    searchHashtagTool.name,
+    searchHashtagTool.description,
+    SearchHashtagInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await searchHashtagTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    getHashtagMediaTool.name,
+    getHashtagMediaTool.description,
+    GetHashtagMediaInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await getHashtagMediaTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 25: Competitor Analysis via Business Discovery
+  server.tool(
+    getCompetitorProfileTool.name,
+    getCompetitorProfileTool.description,
+    GetCompetitorProfileInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+    async (args) => {
+      try {
+        const result = await getCompetitorProfileTool.execute(args, provider);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };

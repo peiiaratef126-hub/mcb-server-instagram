@@ -42,6 +42,9 @@ describe("MCP Server Integration (Phase 1 & Phase 2)", () => {
       "get_conversation_messages",
       "preview_send_dm",
       "execute_send_dm",
+      "search_hashtag",
+      "get_hashtag_media",
+      "get_competitor_profile",
     ]);
 
     // Read tools
@@ -56,6 +59,16 @@ describe("MCP Server Integration (Phase 1 & Phase 2)", () => {
       idempotentHint: true,
     });
     expect(registered.get_user_tags.annotations).toEqual({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    });
+    expect(registered.search_hashtag.annotations).toEqual({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    });
+    expect(registered.get_competitor_profile.annotations).toEqual({
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
