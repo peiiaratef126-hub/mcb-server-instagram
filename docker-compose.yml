@@ -1,0 +1,90 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: mcb-instagram-db
+    restart: unless-stopped
+    profiles: ["full", "db", "worker", "gateway"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mcb_instagram}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./packages/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mcb_instagram"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  core-worker:
+    build:
+      context: ./services/core-worker
+      dockerfile: Dockerfile
+    container_name: mcb-instagram-worker
+    restart: unless-stopped
+    profiles: ["full", "worker"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/mcb_instagram}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      INSTAGRAM_ACCOUNT_ID: ${INSTAGRAM_ACCOUNT_ID:-}
+      INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: mcb-instagram-gateway
+    restart: unless-stopped
+    profiles: ["full", "gateway"]
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      PORT: 8080
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/mcb_instagram}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      WEBHOOK_VERIFY_TOKEN: ${WEBHOOK_VERIFY_TOKEN:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+  media-ai:
+    build:
+      context: ./services/media-ai
+      dockerfile: Dockerfile
+    container_name: mcb-instagram-media-ai
+    restart: unless-stopped
+    profiles: ["full", "media"]
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+  mcp-server:
+    build:
+      context: ./apps/mcp-server
+      dockerfile: Dockerfile
+    container_name: mcb-instagram-mcp-server
+    restart: unless-stopped
+    profiles: ["full", "mcp"]
+    depends_on:
+      core-worker:
+        condition: service_started
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      RUN_MODE: full
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/mcb_instagram}
+      INSTAGRAM_ACCOUNT_ID: ${INSTAGRAM_ACCOUNT_ID:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+volumes:
+  pgdata:
