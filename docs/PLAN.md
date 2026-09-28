@@ -114,14 +114,14 @@
 - [x] **Checkpoint 0 Confirmation**
 
 ### Phase 1: Read-Only Tools (TypeScript)
-- [ ] Feature 1: Profile Info
-- [ ] Feature 2: Recent Posts
-- [ ] Feature 3: Post Details
-- [ ] Feature 7: List Comments
-- [ ] Feature 10: Account Insights
-- [ ] Feature 11: Post Insights
-- [ ] Hand-written fixtures & unit test suite
-- [ ] **Checkpoint 1 Confirmation**
+- [x] Feature 1: Profile Info
+- [x] Feature 2: Recent Posts
+- [x] Feature 3: Post Details
+- [x] Feature 7: List Comments
+- [x] Feature 10: Account Insights
+- [x] Feature 11: Post Insights
+- [x] Hand-written fixtures & unit test suite
+- [x] **Checkpoint 1 Confirmation**
 
 ### Phase 2: Comment Writes & Lite Release
 - [ ] Feature 8: Reply to Comment (2-step confirmation flow)
