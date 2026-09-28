@@ -19,6 +19,30 @@ import {
   executeModifyCommentTool,
   ExecuteModifyCommentInputSchema,
 } from "./tools/modify-comment.js";
+import {
+  previewPublishImageTool,
+  PreviewPublishImageInputSchema,
+  executePublishImageTool,
+  ExecutePublishImageInputSchema,
+} from "./tools/publish-image.js";
+import {
+  previewPublishVideoTool,
+  PreviewPublishVideoInputSchema,
+  executePublishVideoTool,
+  ExecutePublishVideoInputSchema,
+} from "./tools/publish-video.js";
+import {
+  previewPublishCarouselTool,
+  PreviewPublishCarouselInputSchema,
+  executePublishCarouselTool,
+  ExecutePublishCarouselInputSchema,
+} from "./tools/publish-carousel.js";
+import {
+  previewSchedulePostTool,
+  PreviewSchedulePostInputSchema,
+  executeSchedulePostTool,
+  ExecuteSchedulePostInputSchema,
+} from "./tools/schedule-post.js";
 import { BaseError } from "./errors/index.js";
 
 export const SERVER_NAME = "mcb-server-instagram";
@@ -216,6 +240,146 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     async (args) => {
       try {
         const result = await executeModifyCommentTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 4: Publish Image (Preview & Execute)
+  server.tool(
+    previewPublishImageTool.name,
+    previewPublishImageTool.description,
+    PreviewPublishImageInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await previewPublishImageTool.execute(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    executePublishImageTool.name,
+    executePublishImageTool.description,
+    ExecutePublishImageInputSchema.shape,
+    { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await executePublishImageTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 5: Publish Video / Reel (Preview & Execute)
+  server.tool(
+    previewPublishVideoTool.name,
+    previewPublishVideoTool.description,
+    PreviewPublishVideoInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await previewPublishVideoTool.execute(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    executePublishVideoTool.name,
+    executePublishVideoTool.description,
+    ExecutePublishVideoInputSchema.shape,
+    { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await executePublishVideoTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 6: Publish Carousel (Preview & Execute)
+  server.tool(
+    previewPublishCarouselTool.name,
+    previewPublishCarouselTool.description,
+    PreviewPublishCarouselInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await previewPublishCarouselTool.execute(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    executePublishCarouselTool.name,
+    executePublishCarouselTool.description,
+    ExecutePublishCarouselInputSchema.shape,
+    { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await executePublishCarouselTool.execute(args, provider);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  // Feature 15: Schedule Post (Preview & Execute)
+  server.tool(
+    previewSchedulePostTool.name,
+    previewSchedulePostTool.description,
+    PreviewSchedulePostInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await previewSchedulePostTool.execute(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return formatErrorResponse(err);
+      }
+    }
+  );
+
+  server.tool(
+    executeSchedulePostTool.name,
+    executeSchedulePostTool.description,
+    ExecuteSchedulePostInputSchema.shape,
+    { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+    async (args) => {
+      try {
+        const result = await executeSchedulePostTool.execute(args, provider);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };

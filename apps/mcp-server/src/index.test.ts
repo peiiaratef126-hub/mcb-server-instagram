@@ -28,6 +28,14 @@ describe("MCP Server Integration (Phase 1 & Phase 2)", () => {
       "execute_reply_comment",
       "preview_modify_comment",
       "execute_modify_comment",
+      "preview_publish_image",
+      "execute_publish_image",
+      "preview_publish_video",
+      "execute_publish_video",
+      "preview_publish_carousel",
+      "execute_publish_carousel",
+      "preview_schedule_post",
+      "execute_schedule_post",
     ]);
 
     // Read tools
@@ -48,7 +56,7 @@ describe("MCP Server Integration (Phase 1 & Phase 2)", () => {
       destructiveHint: false,
       idempotentHint: false,
     });
-    expect(registered.preview_modify_comment.annotations).toEqual({
+    expect(registered.preview_publish_image.annotations).toEqual({
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: false,
@@ -61,6 +69,11 @@ describe("MCP Server Integration (Phase 1 & Phase 2)", () => {
       idempotentHint: false,
     });
     expect(registered.execute_modify_comment.annotations).toEqual({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+    });
+    expect(registered.execute_publish_image.annotations).toEqual({
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: false,
