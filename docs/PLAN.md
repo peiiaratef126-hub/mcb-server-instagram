@@ -158,10 +158,15 @@
 - [x] Feature 21: Deterministic auto-reply rules (rate-capped, audit-logged, opt-in)
 - [x] Security tests (forged signature rejection, oversized body rejection)
 - [x] Prepare release v0.3 (CHANGELOG, version bump, release notes; no external publishing)
-- [ ] **Checkpoint 5 Confirmation**
+- [x] **Checkpoint 5 Confirmation**
 
-### Phase 6–9: Roadmap (On user instruction only)
-- [ ] Phase 6: Features 13 (Hashtags), 25 (Competitor analysis)
+### Phase 6: Discovery & Intelligence Tools (TypeScript)
+- [x] Feature 13: Hashtag Search & Media Discovery (`search_hashtag`, `get_hashtag_media` with rolling 30-tag quota warnings)
+- [x] Feature 25: Competitor Analysis via Business Discovery (`get_competitor_profile` with untrusted data boundaries)
+- [x] Provider mock fixtures and MCP server entrypoint integration tests
+- [ ] **Checkpoint 6 Confirmation**
+
+### Phase 7–9: Roadmap (On user instruction only)
 - [ ] Phase 7: Features 23 (Best time), 24 (Sentiment), 22 (AI captions)
 - [ ] Phase 8: Feature 26 (Web dashboard)
 - [ ] Phase 9: v1.0 Polish, Docker images build-check, `CONTRIBUTING.md`
