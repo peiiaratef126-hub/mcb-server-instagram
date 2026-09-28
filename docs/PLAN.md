@@ -164,9 +164,16 @@
 - [x] Feature 13: Hashtag Search & Media Discovery (`search_hashtag`, `get_hashtag_media` with rolling 30-tag quota warnings)
 - [x] Feature 25: Competitor Analysis via Business Discovery (`get_competitor_profile` with untrusted data boundaries)
 - [x] Provider mock fixtures and MCP server entrypoint integration tests
-- [ ] **Checkpoint 6 Confirmation**
+- [x] **Checkpoint 6 Confirmation**
 
-### Phase 7–9: Roadmap (On user instruction only)
-- [ ] Phase 7: Features 23 (Best time), 24 (Sentiment), 22 (AI captions)
+### Phase 7: AI & Content Optimization (Python, SQL & TypeScript)
+- [x] Feature 23: Best Time to Post Analytics Engine (`media_ai/analytics/best_time.py`, SQL aggregation query, & TypeScript tool `get_best_time_to_post`)
+- [x] Feature 24: Comment Sentiment Analyzer with Arabic Dialect Support (`media_ai/ai/sentiment.py` & TypeScript tool `analyze_comment_sentiment`, gated by `ANTHROPIC_API_KEY`)
+- [x] Feature 22: AI Caption & Hashtag Generator (`media_ai/ai/caption_generator.py` & TypeScript tool `generate_caption_and_hashtags`, gated by `ANTHROPIC_API_KEY`)
+- [x] Expose all 3 tools on MCP server entrypoint (`apps/mcp-server/src/server.ts`, total 30 registered MCP tools)
+- [x] Unit test suites passing: Python (25/25 passed), TypeScript (90/90 passed)
+- [ ] **Checkpoint 7 Confirmation**
+
+### Phase 8–9: Roadmap (On user instruction only)
 - [ ] Phase 8: Feature 26 (Web dashboard)
 - [ ] Phase 9: v1.0 Polish, Docker images build-check, `CONTRIBUTING.md`
