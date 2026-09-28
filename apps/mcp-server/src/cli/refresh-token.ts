@@ -1,8 +1,16 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import dotenv from "dotenv";
 import { logger } from "../utils/logger.js";
 import { AuthenticationError, BaseError } from "../errors/index.js";
+
+/**
+ * Currently supported Meta Graph API versions.
+ * Meta supports versions for 2 years after release.
+ */
+export const SUPPORTED_GRAPH_VERSIONS = ["v21.0", "v22.0"] as const;
+export const DEFAULT_GRAPH_VERSION = "v21.0";
 
 export interface RefreshTokenResult {
   accessToken: string;
@@ -10,8 +18,8 @@ export interface RefreshTokenResult {
 }
 
 /**
- * Exchanges an existing valid token for a refreshed long-lived token via Meta Graph API v21.0.
- * NEVER logs or prints the token value.
+ * Exchanges an existing valid token for a refreshed long-lived token via Meta Graph API.
+ * NEVER logs or prints the token value or secrets.
  */
 export async function refreshLongLivedToken(options: {
   currentToken: string;
@@ -21,7 +29,7 @@ export async function refreshLongLivedToken(options: {
   apiVersion?: string;
 }): Promise<RefreshTokenResult> {
   const fetchFn = options.fetchFn ?? globalThis.fetch;
-  const version = options.apiVersion ?? "v21.0";
+  const version = options.apiVersion ?? process.env.META_GRAPH_VERSION ?? DEFAULT_GRAPH_VERSION;
 
   const url = new URL(`https://graph.facebook.com/${version}/oauth/access_token`);
   url.searchParams.set("grant_type", "fb_exchange_token");
@@ -29,7 +37,7 @@ export async function refreshLongLivedToken(options: {
   url.searchParams.set("client_secret", options.appSecret);
   url.searchParams.set("fb_exchange_token", options.currentToken);
 
-  logger.info("[refresh-token] Requesting token extension from Meta Graph API...");
+  logger.info(`[refresh-token] Requesting token extension via Meta Graph API ${version}...`);
 
   let response: Response;
   try {
@@ -38,14 +46,23 @@ export async function refreshLongLivedToken(options: {
       headers: { Accept: "application/json" },
     });
   } catch (err) {
-    throw new BaseError(`Network failure while requesting token refresh: ${(err as Error).message}`);
+    // Sanitize network error messages to prevent leaking URL with secret query params
+    const sanitizedMsg = (err as Error).message.replace(/client_secret=[^&\s]+/g, "client_secret=[REDACTED]").replace(/fb_exchange_token=[^&\s]+/g, "fb_exchange_token=[REDACTED]");
+    logger.error("[refresh-token] Network error during token refresh", { error: sanitizedMsg });
+    throw new BaseError(`Network failure during token refresh: ${sanitizedMsg}`);
   }
 
-  const data = (await response.json()) as {
+  let data: {
     access_token?: string;
     expires_in?: number;
     error?: { message?: string; code?: number };
   };
+
+  try {
+    data = (await response.json()) as typeof data;
+  } catch {
+    throw new BaseError(`Failed to parse response from Meta Graph API (HTTP ${response.status})`);
+  }
 
   if (!response.ok || !data.access_token) {
     const errorMsg = data.error?.message || `HTTP ${response.status} failed to refresh token`;
@@ -66,7 +83,8 @@ export async function refreshLongLivedToken(options: {
 }
 
 /**
- * Updates the INSTAGRAM_ACCESS_TOKEN key in the target .env file safely without disturbing other variables.
+ * Updates the INSTAGRAM_ACCESS_TOKEN key in the target .env file atomically
+ * using a temporary write file + atomic rename to prevent file corruption.
  */
 export function updateEnvFileToken(envFilePath: string, newToken: string, fsModule = fs): void {
   if (!fsModule.existsSync(envFilePath)) {
@@ -83,7 +101,21 @@ export function updateEnvFileToken(envFilePath: string, newToken: string, fsModu
     updatedContent = content + `\nINSTAGRAM_ACCESS_TOKEN=${newToken}\n`;
   }
 
-  fsModule.writeFileSync(envFilePath, updatedContent, "utf8");
+  // Atomic write: write to sibling temp file first, then atomic rename
+  const tempPath = `${envFilePath}.tmp.${crypto.randomUUID()}`;
+  try {
+    fsModule.writeFileSync(tempPath, updatedContent, "utf8");
+    fsModule.renameSync(tempPath, envFilePath);
+  } catch (err) {
+    if (fsModule.existsSync(tempPath)) {
+      try {
+        fsModule.unlinkSync(tempPath);
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+    throw new BaseError(`Failed to atomically update .env file: ${(err as Error).message}`);
+  }
 }
 
 /**
@@ -96,12 +128,13 @@ export async function runRefreshTokenCli(envPath?: string, fetchFn?: typeof fetc
   const currentToken = process.env.INSTAGRAM_ACCESS_TOKEN;
   const appId = process.env.META_APP_ID;
   const appSecret = process.env.META_APP_SECRET;
+  const apiVersion = process.env.META_GRAPH_VERSION || DEFAULT_GRAPH_VERSION;
 
   if (!currentToken) {
     throw new BaseError("INSTAGRAM_ACCESS_TOKEN is not defined in environment or .env file.");
   }
   if (!appId || !appSecret) {
-    throw new BaseError("META_APP_ID and META_APP_SECRET are required in .env to perform automatic token refresh.");
+    throw new BaseError("META_APP_ID and META_APP_SECRET are required in .env to perform token refresh.");
   }
 
   const result = await refreshLongLivedToken({
@@ -109,14 +142,15 @@ export async function runRefreshTokenCli(envPath?: string, fetchFn?: typeof fetc
     appId,
     appSecret,
     fetchFn,
+    apiVersion,
   });
 
   updateEnvFileToken(targetEnv, result.accessToken);
 
   const daysValid = Math.round(result.expiresInSeconds / 86400);
-  // Log confirmation WITHOUT printing the token
-  logger.info(`[refresh-token] Token successfully refreshed and written to ${targetEnv}. Valid for approximately ${daysValid} days.`);
-  console.log(`[OK] Instagram access token refreshed successfully. Valid for ~${daysValid} days.`);
+  // Log confirmation WITHOUT printing the token or secret values
+  logger.info(`[refresh-token] Token refreshed via ${apiVersion} and atomically written to ${targetEnv}. Valid for ~${daysValid} days.`);
+  console.log(`[OK] Instagram access token refreshed successfully via Meta Graph API ${apiVersion}. Valid for ~${daysValid} days.`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

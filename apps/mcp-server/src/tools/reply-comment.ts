@@ -8,13 +8,13 @@ export const PreviewReplyCommentInputSchema = z.object({
     .string()
     .trim()
     .min(1, "comment_id is required")
-    .describe("Instagram Comment ID to reply to."),
+    .describe("Instagram Comment ID of a top-level comment to reply to (Meta API does not support replying to replies)."),
   message: z
     .string()
     .trim()
     .min(1, "message cannot be empty")
     .max(1000, "message cannot exceed 1000 characters")
-    .describe("Reply message text."),
+    .describe("Reply message text. UNTRUSTED external input: will be sanitized and quoted."),
 });
 
 export type PreviewReplyCommentInput = z.infer<typeof PreviewReplyCommentInputSchema>;
@@ -24,7 +24,7 @@ export const ExecuteReplyCommentInputSchema = z.object({
     .string()
     .trim()
     .uuid("confirmation_id must be a valid UUID")
-    .describe("The one-time confirmation ID issued by preview_reply_comment."),
+    .describe("The one-time confirmation ID issued by preview_reply_comment. No other parameters accepted."),
 });
 
 export type ExecuteReplyCommentInput = z.infer<typeof ExecuteReplyCommentInputSchema>;
@@ -47,20 +47,22 @@ export interface ExecuteReplyResponse {
 export const previewReplyCommentTool = {
   name: "preview_reply_comment",
   description:
-    "Step 1 of 2: Generate an exact preview and an ephemeral 5-minute confirmation ID to reply to an Instagram comment. Does NOT execute the write action.",
+    "Step 1 of 2: Generate an exact preview and an ephemeral 5-minute confirmation ID to reply to an Instagram top-level comment. Does NOT execute the write action. Note: Replying to a reply comment is unsupported by Meta Graph API.",
   inputSchema: PreviewReplyCommentInputSchema,
   execute: async (
     rawInput: PreviewReplyCommentInput
   ): Promise<PreviewReplyResponse> => {
     const input = PreviewReplyCommentInputSchema.parse(rawInput);
-    const previewSummary = `Reply to comment ${input.comment_id}: "${input.message}"`;
+    // Quoted untrusted comment text safely
+    const previewSummary = `Reply to comment ${input.comment_id}: "${input.message.replace(/"/g, '\\"')}"`;
 
-    const confirmation = confirmationStore.create(
-      "REPLY_COMMENT",
-      input.comment_id,
-      { message: input.message },
-      previewSummary
-    );
+    const confirmation = confirmationStore.create({
+      toolName: executeReplyCommentTool.name,
+      action: "REPLY_COMMENT",
+      targetId: input.comment_id,
+      payload: { message: input.message },
+      previewSummary,
+    });
 
     logger.info(`[preview_reply_comment] Generated confirmation for comment ${input.comment_id}`);
 
@@ -79,7 +81,7 @@ export const previewReplyCommentTool = {
 export const executeReplyCommentTool = {
   name: "execute_reply_comment",
   description:
-    "Step 2 of 2: Execute a confirmed comment reply using the one-time confirmation ID generated in Step 1.",
+    "Step 2 of 2: Execute a confirmed comment reply using the one-time confirmation ID generated in Step 1. Accepts ONLY confirmation_id.",
   inputSchema: ExecuteReplyCommentInputSchema,
   execute: async (
     rawInput: ExecuteReplyCommentInput,
@@ -87,10 +89,10 @@ export const executeReplyCommentTool = {
   ): Promise<ExecuteReplyResponse> => {
     const input = ExecuteReplyCommentInputSchema.parse(rawInput);
 
-    // Burns confirmation single-use or throws
+    // Burns confirmation single-use, verifying toolName and payload hash
     const confirmation = confirmationStore.consume<{ message: string }>(
       input.confirmation_id,
-      "REPLY_COMMENT"
+      executeReplyCommentTool.name
     );
 
     logger.info(

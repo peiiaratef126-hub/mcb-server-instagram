@@ -11,9 +11,9 @@ export const PreviewModifyCommentInputSchema = z.object({
     .string()
     .trim()
     .min(1, "comment_id is required")
-    .describe("Instagram Comment ID to modify or delete."),
+    .describe("Instagram Comment ID to modify or permanently delete."),
   action: CommentActionTypeSchema.describe(
-    "Action to perform: 'hide' (hides comment from public), 'unhide' (makes comment visible), or 'delete' (permanently removes comment)."
+    "Action to perform: 'hide' (hides comment from public view), 'unhide' (makes comment visible again), or 'delete' (permanently and irreversibly removes comment)."
   ),
 });
 
@@ -24,7 +24,7 @@ export const ExecuteModifyCommentInputSchema = z.object({
     .string()
     .trim()
     .uuid("confirmation_id must be a valid UUID")
-    .describe("The one-time confirmation ID issued by preview_modify_comment."),
+    .describe("The one-time confirmation ID issued by preview_modify_comment. No other parameters accepted."),
 });
 
 export type ExecuteModifyCommentInput = z.infer<typeof ExecuteModifyCommentInputSchema>;
@@ -47,7 +47,7 @@ export interface ExecuteModifyCommentResponse {
 export const previewModifyCommentTool = {
   name: "preview_modify_comment",
   description:
-    "Step 1 of 2: Generate an exact preview and an ephemeral 5-minute confirmation ID to hide, unhide, or delete an Instagram comment. Does NOT execute the action.",
+    "Step 1 of 2: Generate an exact preview and an ephemeral 5-minute confirmation ID to hide, unhide, or permanently delete an Instagram comment. Does NOT execute the write action.",
   inputSchema: PreviewModifyCommentInputSchema,
   execute: async (
     rawInput: PreviewModifyCommentInput
@@ -62,25 +62,26 @@ export const previewModifyCommentTool = {
       case "hide":
         writeAction = "HIDE_COMMENT";
         payload = { hide: true };
-        previewSummary = `Hide comment ${input.comment_id} from public view`;
+        previewSummary = `Hide comment ${input.comment_id} from public view (comment remains recoverable)`;
         break;
       case "unhide":
         writeAction = "UNHIDE_COMMENT";
         payload = { hide: false };
-        previewSummary = `Unhide comment ${input.comment_id} (make publicly visible)`;
+        previewSummary = `Unhide comment ${input.comment_id} (make publicly visible again)`;
         break;
       case "delete":
         writeAction = "DELETE_COMMENT";
-        previewSummary = `PERMANENTLY DELETE comment ${input.comment_id} (irreversible action)`;
+        previewSummary = `WARNING: PERMANENTLY DELETE comment ${input.comment_id} (irreversible action - this CANNOT be undone).`;
         break;
     }
 
-    const confirmation = confirmationStore.create(
-      writeAction,
-      input.comment_id,
+    const confirmation = confirmationStore.create({
+      toolName: executeModifyCommentTool.name,
+      action: writeAction,
+      targetId: input.comment_id,
       payload,
-      previewSummary
-    );
+      previewSummary,
+    });
 
     logger.info(`[preview_modify_comment] Generated confirmation for comment ${input.comment_id} (Action: ${writeAction})`);
 
@@ -99,7 +100,7 @@ export const previewModifyCommentTool = {
 export const executeModifyCommentTool = {
   name: "execute_modify_comment",
   description:
-    "Step 2 of 2: Execute a confirmed comment hide, unhide, or delete using the one-time confirmation ID generated in Step 1.",
+    "Step 2 of 2: Execute a confirmed comment hide, unhide, or delete using the one-time confirmation ID generated in Step 1. Accepts ONLY confirmation_id.",
   inputSchema: ExecuteModifyCommentInputSchema,
   execute: async (
     rawInput: ExecuteModifyCommentInput,
@@ -107,18 +108,10 @@ export const executeModifyCommentTool = {
   ): Promise<ExecuteModifyCommentResponse> => {
     const input = ExecuteModifyCommentInputSchema.parse(rawInput);
 
-    // Look up confirmation without specifying action yet to determine route
-    const pending = confirmationStore.get(input.confirmation_id);
-    if (!pending) {
-      // consume will throw appropriate ConfirmationError
-      confirmationStore.consume(input.confirmation_id);
-    }
-
-    const writeAction = pending!.action;
-    // Burns confirmation single-use
+    // Burns confirmation single-use, enforcing tool binding
     const confirmation = confirmationStore.consume<{ hide?: boolean }>(
       input.confirmation_id,
-      writeAction
+      executeModifyCommentTool.name
     );
 
     logger.info(

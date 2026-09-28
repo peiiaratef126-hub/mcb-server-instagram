@@ -52,6 +52,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     getProfileInfoTool.name,
     getProfileInfoTool.description,
     GetProfileInfoInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     async (args) => {
       try {
         const result = await getProfileInfoTool.execute(args, provider);
@@ -69,6 +70,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     getRecentPostsTool.name,
     getRecentPostsTool.description,
     GetRecentPostsInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     async (args) => {
       try {
         const result = await getRecentPostsTool.execute(args, provider);
@@ -86,6 +88,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     getPostDetailsTool.name,
     getPostDetailsTool.description,
     GetPostDetailsInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     async (args) => {
       try {
         const result = await getPostDetailsTool.execute(args, provider);
@@ -103,6 +106,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     listCommentsTool.name,
     listCommentsTool.description,
     ListCommentsInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     async (args) => {
       try {
         const result = await listCommentsTool.execute(args, provider);
@@ -120,6 +124,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     getAccountInsightsTool.name,
     getAccountInsightsTool.description,
     GetAccountInsightsInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     async (args) => {
       try {
         const result = await getAccountInsightsTool.execute(args, provider);
@@ -137,6 +142,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     getPostInsightsTool.name,
     getPostInsightsTool.description,
     GetPostInsightsInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
     async (args) => {
       try {
         const result = await getPostInsightsTool.execute(args, provider);
@@ -154,6 +160,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     previewReplyCommentTool.name,
     previewReplyCommentTool.description,
     PreviewReplyCommentInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: false },
     async (args) => {
       try {
         const result = await previewReplyCommentTool.execute(args);
@@ -170,6 +177,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     executeReplyCommentTool.name,
     executeReplyCommentTool.description,
     ExecuteReplyCommentInputSchema.shape,
+    { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     async (args) => {
       try {
         const result = await executeReplyCommentTool.execute(args, provider);
@@ -187,6 +195,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     previewModifyCommentTool.name,
     previewModifyCommentTool.description,
     PreviewModifyCommentInputSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: false },
     async (args) => {
       try {
         const result = await previewModifyCommentTool.execute(args);
@@ -203,6 +212,7 @@ export function createMcpServer(provider: InstagramGraphProvider): McpServer {
     executeModifyCommentTool.name,
     executeModifyCommentTool.description,
     ExecuteModifyCommentInputSchema.shape,
+    { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
     async (args) => {
       try {
         const result = await executeModifyCommentTool.execute(args, provider);

@@ -1,58 +1,70 @@
-import { describe, it, expect, vi } from "vitest";
-import { refreshLongLivedToken, updateEnvFileToken, runRefreshTokenCli } from "./refresh-token.js";
-import { AuthenticationError } from "../errors/index.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  refreshLongLivedToken,
+  updateEnvFileToken,
+  runRefreshTokenCli,
+  DEFAULT_GRAPH_VERSION,
+} from "./refresh-token.js";
+import { AuthenticationError, BaseError } from "../errors/index.js";
 
-describe("Lite Mode CLI (Feature 16 Lite - refresh-token)", () => {
-  it("should exchange current token for new long-lived token via Meta Graph API", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        access_token: "EAAG_new_refreshed_access_token_99999",
-        token_type: "bearer",
-        expires_in: 5184000,
-      }),
-    });
+describe("Lite Mode CLI: refresh-token (Feature 16 Lite)", () => {
+  const SECRET_TOKEN = "EAAG_super_sensitive_token_never_leak_xyz_12345";
+  const SECRET_APP_SECRET = "super_secret_meta_app_secret_998877";
+  const APP_ID = "123456789012345";
 
-    const result = await refreshLongLivedToken({
-      currentToken: "EAAG_current_old_token_12345",
-      appId: "1234567890",
-      appSecret: "app_secret_abc123",
-      fetchFn: mockFetch as unknown as typeof fetch,
-    });
-
-    expect(result.accessToken).toBe("EAAG_new_refreshed_access_token_99999");
-    expect(result.expiresInSeconds).toBe(5184000);
-
-    const calledUrl = mockFetch.mock.calls[0][0] as string;
-    expect(calledUrl).toContain("grant_type=fb_exchange_token");
-    expect(calledUrl).toContain("client_id=1234567890");
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("should throw AuthenticationError if Meta Graph API rejects refresh", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 400,
-      json: async () => ({
-        error: {
-          message: "Error validating verification code that was used to generate this token.",
-          code: 100,
-        },
-      }),
-    });
+  describe("Token Refresh & Graph API Versioning", () => {
+    it("should exchange token using default Graph API version v21.0", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          access_token: "EAAG_refreshed_new_token_11111",
+          expires_in: 5184000,
+        }),
+      });
 
-    await expect(
-      refreshLongLivedToken({
-        currentToken: "invalid_or_expired_token",
-        appId: "1234567890",
-        appSecret: "app_secret_abc123",
+      const res = await refreshLongLivedToken({
+        currentToken: SECRET_TOKEN,
+        appId: APP_ID,
+        appSecret: SECRET_APP_SECRET,
         fetchFn: mockFetch as unknown as typeof fetch,
-      })
-    ).rejects.toThrowError(AuthenticationError);
+      });
+
+      expect(res.accessToken).toBe("EAAG_refreshed_new_token_11111");
+      const calledUrl = mockFetch.mock.calls[0][0] as string;
+      expect(calledUrl).toContain(`https://graph.facebook.com/${DEFAULT_GRAPH_VERSION}/oauth/access_token`);
+    });
+
+    it("should support custom configurable Graph API version (e.g. v22.0)", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          access_token: "EAAG_refreshed_new_token_v22",
+          expires_in: 5184000,
+        }),
+      });
+
+      await refreshLongLivedToken({
+        currentToken: SECRET_TOKEN,
+        appId: APP_ID,
+        appSecret: SECRET_APP_SECRET,
+        apiVersion: "v22.0",
+        fetchFn: mockFetch as unknown as typeof fetch,
+      });
+
+      const calledUrl = mockFetch.mock.calls[0][0] as string;
+      expect(calledUrl).toContain("https://graph.facebook.com/v22.0/oauth/access_token");
+    });
   });
 
-  it("should update .env file preserving comments and structure without leaking token", () => {
-    const initialEnv = `# Meta Configuration
+  describe("Atomic .env File Update", () => {
+    it("should update .env atomically via temporary write and rename", () => {
+      const initialEnv = `# Meta Configuration
 APP_ENV=development
 PORT=3000
 INSTAGRAM_ACCOUNT_ID=17841400000000000
@@ -60,66 +72,164 @@ INSTAGRAM_ACCESS_TOKEN=old_sample_token_to_replace
 META_APP_ID=12345
 `;
 
-    let writtenContent = "";
-    const mockFs = {
-      existsSync: () => true,
-      readFileSync: () => initialEnv,
-      writeFileSync: (_file: string, content: string) => {
-        writtenContent = content;
-      },
-    };
+      const filesWritten: Record<string, string> = {};
+      let renameSource = "";
+      let renameTarget = "";
 
-    updateEnvFileToken(".env", "new_freshly_generated_token_xyz", mockFs as any);
+      const mockFs = {
+        existsSync: () => true,
+        readFileSync: () => initialEnv,
+        writeFileSync: (filePath: string, content: string) => {
+          filesWritten[filePath] = content;
+        },
+        renameSync: (oldPath: string, newPath: string) => {
+          renameSource = oldPath;
+          renameTarget = newPath;
+          filesWritten[newPath] = filesWritten[oldPath];
+        },
+        unlinkSync: vi.fn(),
+      };
 
-    expect(writtenContent).toContain("INSTAGRAM_ACCESS_TOKEN=new_freshly_generated_token_xyz");
-    expect(writtenContent).toContain("# Meta Configuration");
-    expect(writtenContent).toContain("PORT=3000");
-    expect(writtenContent).not.toContain("old_sample_token_to_replace");
+      updateEnvFileToken(".env", "new_freshly_generated_token_xyz", mockFs as any);
+
+      // Verify that write was to a temp file, followed by atomic renameSync
+      expect(renameSource).toContain(".env.tmp.");
+      expect(renameTarget).toBe(".env");
+      expect(filesWritten[".env"]).toContain("INSTAGRAM_ACCESS_TOKEN=new_freshly_generated_token_xyz");
+      expect(filesWritten[".env"]).toContain("# Meta Configuration");
+      expect(filesWritten[".env"]).not.toContain("old_sample_token_to_replace");
+    });
   });
 
-  it("should verify that stdout/stderr never prints the actual secret token", async () => {
-    const stdoutSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const secretToken = "EAAG_very_secret_token_never_leak_in_logs";
+  describe("Zero-Leak Audits (Stdout, Stderr, and Logs)", () => {
+    it("should assert that token, app secret, and full URL never appear in stdout, stderr, or logs on forced network error", async () => {
+      const stdoutSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const processStderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        access_token: secretToken,
-        expires_in: 5184000,
-      }),
+      const mockFetch = vi.fn().mockRejectedValue(
+        new Error(`getaddrinfo ENOTFOUND graph.facebook.com with query fb_exchange_token=${SECRET_TOKEN}&client_secret=${SECRET_APP_SECRET}`)
+      );
+
+      try {
+        await refreshLongLivedToken({
+          currentToken: SECRET_TOKEN,
+          appId: APP_ID,
+          appSecret: SECRET_APP_SECRET,
+          fetchFn: mockFetch as unknown as typeof fetch,
+        });
+        expect.unreachable("Should have thrown network error");
+      } catch (err) {
+        expect(err).toBeInstanceOf(BaseError);
+        // Error message must not contain secret token or app secret
+        expect((err as Error).message).not.toContain(SECRET_TOKEN);
+        expect((err as Error).message).not.toContain(SECRET_APP_SECRET);
+      }
+
+      // Check all console and stderr outputs
+      for (const call of stdoutSpy.mock.calls) {
+        expect(call.join(" ")).not.toContain(SECRET_TOKEN);
+        expect(call.join(" ")).not.toContain(SECRET_APP_SECRET);
+      }
+      for (const call of stderrSpy.mock.calls) {
+        expect(call.join(" ")).not.toContain(SECRET_TOKEN);
+        expect(call.join(" ")).not.toContain(SECRET_APP_SECRET);
+      }
+      for (const call of processStderrSpy.mock.calls) {
+        const text = String(call[0]);
+        expect(text).not.toContain(SECRET_TOKEN);
+        expect(text).not.toContain(SECRET_APP_SECRET);
+      }
     });
 
-    let writtenContent = "";
-    const mockFs = {
-      existsSync: () => true,
-      readFileSync: () => "INSTAGRAM_ACCESS_TOKEN=old\n",
-      writeFileSync: (_f: string, c: string) => {
-        writtenContent = c;
-      },
-    };
+    it("should assert that token, app secret, and full URL never appear in stdout, stderr, or logs on 4xx Meta error", async () => {
+      const stdoutSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const processStderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 
-    process.env.INSTAGRAM_ACCESS_TOKEN = "old_token";
-    process.env.META_APP_ID = "123";
-    process.env.META_APP_SECRET = "sec";
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          error: {
+            message: "Invalid verification code or token has expired.",
+            type: "OAuthException",
+            code: 190,
+            fbtrace_id: "FBT_TEST_TRACE",
+          },
+        }),
+      });
 
-    // Run CLI with mock fs
-    const res = await refreshLongLivedToken({
-      currentToken: "old_token",
-      appId: "123",
-      appSecret: "sec",
-      fetchFn: mockFetch as unknown as typeof fetch,
+      try {
+        await refreshLongLivedToken({
+          currentToken: SECRET_TOKEN,
+          appId: APP_ID,
+          appSecret: SECRET_APP_SECRET,
+          fetchFn: mockFetch as unknown as typeof fetch,
+        });
+        expect.unreachable("Should have thrown AuthenticationError");
+      } catch (err) {
+        expect(err).toBeInstanceOf(AuthenticationError);
+        expect((err as Error).message).not.toContain(SECRET_TOKEN);
+        expect((err as Error).message).not.toContain(SECRET_APP_SECRET);
+      }
+
+      // Check all outputs
+      for (const call of stdoutSpy.mock.calls) {
+        expect(call.join(" ")).not.toContain(SECRET_TOKEN);
+        expect(call.join(" ")).not.toContain(SECRET_APP_SECRET);
+      }
+      for (const call of stderrSpy.mock.calls) {
+        expect(call.join(" ")).not.toContain(SECRET_TOKEN);
+        expect(call.join(" ")).not.toContain(SECRET_APP_SECRET);
+      }
+      for (const call of processStderrSpy.mock.calls) {
+        const text = String(call[0]);
+        expect(text).not.toContain(SECRET_TOKEN);
+        expect(text).not.toContain(SECRET_APP_SECRET);
+      }
     });
-    updateEnvFileToken(".env", res.accessToken, mockFs as any);
 
-    // Verify written content contains new token
-    expect(writtenContent).toContain(secretToken);
+    it("should assert that token, app secret, and full URL never appear in stdout, stderr, or logs on successful refresh", async () => {
+      const stdoutSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const processStderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 
-    // Verify console log NEVER contains secret token
-    for (const call of stdoutSpy.mock.calls) {
-      expect(call.join(" ")).not.toContain(secretToken);
-    }
+      const NEW_TOKEN = "EAAG_brand_new_secret_refreshed_token_2026";
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          access_token: NEW_TOKEN,
+          expires_in: 5184000,
+        }),
+      });
 
-    stdoutSpy.mockRestore();
+      const res = await refreshLongLivedToken({
+        currentToken: SECRET_TOKEN,
+        appId: APP_ID,
+        appSecret: SECRET_APP_SECRET,
+        fetchFn: mockFetch as unknown as typeof fetch,
+      });
+
+      expect(res.accessToken).toBe(NEW_TOKEN);
+
+      for (const call of stdoutSpy.mock.calls) {
+        expect(call.join(" ")).not.toContain(SECRET_TOKEN);
+        expect(call.join(" ")).not.toContain(NEW_TOKEN);
+        expect(call.join(" ")).not.toContain(SECRET_APP_SECRET);
+      }
+      for (const call of stderrSpy.mock.calls) {
+        expect(call.join(" ")).not.toContain(SECRET_TOKEN);
+        expect(call.join(" ")).not.toContain(NEW_TOKEN);
+        expect(call.join(" ")).not.toContain(SECRET_APP_SECRET);
+      }
+      for (const call of processStderrSpy.mock.calls) {
+        const text = String(call[0]);
+        expect(text).not.toContain(SECRET_TOKEN);
+        expect(text).not.toContain(NEW_TOKEN);
+        expect(text).not.toContain(SECRET_APP_SECRET);
+      }
+    });
   });
 });
