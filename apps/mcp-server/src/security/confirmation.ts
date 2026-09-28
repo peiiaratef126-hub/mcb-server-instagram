@@ -11,7 +11,8 @@ export type WriteActionType =
   | "DELETE_COMMENT"
   | "PUBLISH_MEDIA"
   | "SCHEDULE_MEDIA"
-  | "SEND_DM";
+  | "SEND_DM"
+  | "SEND_DIRECT_MESSAGE";
 
 export interface PendingConfirmation<T = unknown> {
   id: string;
