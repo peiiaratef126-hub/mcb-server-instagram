@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcb-server-instagram.dev/schemas/publish.json",
+  "title": "PublishRequest",
+  "type": "object",
+  "required": [
+    "account_id",
+    "media_type",
+    "idempotency_key"
+  ],
+  "properties": {
+    "account_id": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "media_type": {
+      "type": "string",
+      "enum": ["IMAGE", "VIDEO", "REELS", "CAROUSEL"]
+    },
+    "caption": {
+      "type": "string"
+    },
+    "media_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "children_urls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "minItems": 2,
+      "maxItems": 10
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcb-server-instagram.dev/schemas/confirmation.json",
+  "title": "ConfirmationToken",
+  "type": "object",
+  "required": [
+    "confirmation_id",
+    "action",
+    "target_id",
+    "preview_summary",
+    "expires_at"
+  ],
+  "properties": {
+    "confirmation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "REPLY_COMMENT",
+        "HIDE_COMMENT",
+        "DELETE_COMMENT",
+        "PUBLISH_MEDIA",
+        "SCHEDULE_MEDIA",
+        "SEND_DM"
+      ]
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "preview_summary": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

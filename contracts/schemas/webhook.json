@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcb-server-instagram.dev/schemas/webhook.json",
+  "title": "MetaWebhookEvent",
+  "type": "object",
+  "required": [
+    "object",
+    "entry"
+  ],
+  "properties": {
+    "object": {
+      "type": "string",
+      "enum": ["instagram"]
+    },
+    "entry": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "time", "changes"],
+        "properties": {
+          "id": { "type": "string" },
+          "time": { "type": "integer" },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["field", "value"],
+              "properties": {
+                "field": { "type": "string" },
+                "value": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

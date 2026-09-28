@@ -1,0 +1,228 @@
+openapi: 3.1.0
+info:
+  title: MCB Server Instagram Internal & Gateway API
+  description: Canonical OpenAPI contract and data schemas for MCB Server Instagram microservices.
+  version: 0.1.0-alpha.0
+
+servers:
+  - url: http://localhost:8080
+    description: Gateway service (public / webhook edge)
+  - url: http://core-worker:8081
+    description: Core-Worker service (internal private network)
+
+paths:
+  /webhook:
+    get:
+      summary: Meta Webhook Verification Handshake
+      description: Responds to Meta hub.challenge verification request during webhook configuration.
+      parameters:
+        - name: hub.mode
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [subscribe]
+        - name: hub.challenge
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hub.verify_token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verification success. Returns raw hub.challenge.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '403':
+          description: Invalid verify token.
+    post:
+      summary: Meta Webhook Event Delivery
+      description: Ingests incoming Instagram webhook notifications verified via X-Hub-Signature-256.
+      parameters:
+        - name: X-Hub-Signature-256
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetaWebhookPayload'
+      responses:
+        '200':
+          description: Event successfully verified and queued.
+        '401':
+          description: Invalid HMAC signature.
+        '413':
+          description: Payload exceeds size limit.
+
+  /internal/token:
+    get:
+      summary: Worker Decrypted Token Retrieval
+      description: Internal endpoint queried by TypeScript mcp-server over secure docker network.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '500':
+          description: Token not configured or decryption failure.
+
+components:
+  schemas:
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - account_id
+        - expires_at
+      properties:
+        access_token:
+          type: string
+          description: Decrypted long-lived access token
+        account_id:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    InstagramProfile:
+      type: object
+      required:
+        - id
+        - username
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        biography:
+          type: string
+        profile_picture_url:
+          type: string
+          format: uri
+        followers_count:
+          type: integer
+        follows_count:
+          type: integer
+        media_count:
+          type: integer
+
+    InstagramMedia:
+      type: object
+      required:
+        - id
+        - media_type
+      properties:
+        id:
+          type: string
+        caption:
+          type: string
+        media_type:
+          type: string
+          enum: [IMAGE, VIDEO, CAROUSEL_ALBUM]
+        media_url:
+          type: string
+          format: uri
+        permalink:
+          type: string
+          format: uri
+        timestamp:
+          type: string
+          format: date-time
+        like_count:
+          type: integer
+        comments_count:
+          type: integer
+
+    InstagramComment:
+      type: object
+      required:
+        - id
+        - text
+        - timestamp
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        username:
+          type: string
+        like_count:
+          type: integer
+        hidden:
+          type: boolean
+
+    ConfirmationPreview:
+      type: object
+      required:
+        - confirmation_id
+        - action
+        - target_id
+        - expires_at
+        - preview_summary
+      properties:
+        confirmation_id:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [REPLY_COMMENT, HIDE_COMMENT, DELETE_COMMENT, PUBLISH_MEDIA, SCHEDULE_MEDIA, SEND_DM]
+        target_id:
+          type: string
+        payload:
+          type: object
+        preview_summary:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    MetaWebhookPayload:
+      type: object
+      required:
+        - object
+        - entry
+      properties:
+        object:
+          type: string
+          enum: [instagram]
+        entry:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - time
+              - changes
+            properties:
+              id:
+                type: string
+              time:
+                type: integer
+              changes:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - field
+                    - value
+                  properties:
+                    field:
+                      type: string
+                    value:
+                      type: object
