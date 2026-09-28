@@ -24,6 +24,21 @@ The project supports two distinct operational modes:
 
 ---
 
+## How We Differ
+
+A survey of existing Instagram MCP projects reveals common pitfalls: reliance on fragile reverse-engineered private APIs (e.g., `instagrapi`) that violate Meta Terms of Service and trigger account suspensions, unauthenticated monolithic scripts, or third-party hosted SaaS solutions requiring external credential sharing.
+
+`mcb-server-instagram` provides an enterprise-grade, self-hosted alternative:
+
+1. **Official Meta Graph API Exclusivity:** Strictly ToS-compliant. Operates exclusively against official Meta Graph API endpoints with official permissions. No private APIs, headless browsers, or unofficial scraping libraries.
+2. **Dual-Mode Architecture (Lite vs. Full):**
+   - **Lite Mode:** Zero Docker overhead. Runs purely as a TypeScript stdio server using local `.env` tokens, supporting immediate read tools and comment moderation.
+   - **Full Mode:** Production microservices stack via Docker Compose (`core-worker` in Go, `gateway` in Go, `media-ai` in Python, PostgreSQL) powering queued publishing, scheduling, resilient webhooks, and media processing.
+3. **Two-Step Confirmation Security Model:** Destructive or visible write actions (publishing, comment deletion/replies, direct messages) cannot be triggered accidentally by agent hallucinations or single tool calls. Every write operation requires a preview step that issues an ephemeral, one-time confirmation ID before execution.
+4. **Zero-Token Internet Gateway:** External webhooks require a public-facing endpoint. Our internet-facing edge `gateway` service holds **zero Instagram access tokens**. It only verifies Meta webhook challenge handshakes and `X-Hub-Signature-256` HMAC signatures before inserting events into an internal database queue with insert-only permissions.
+
+---
+
 ## Architecture
 
 - **`mcp-server` (TypeScript):** Official `@modelcontextprotocol/sdk`, Zod schema validation, stdio transport. Exposes all tools to AI clients.
