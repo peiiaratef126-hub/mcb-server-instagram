@@ -110,8 +110,8 @@
 - [x] **0.3 Meta Setup Guide:** Write `docs/meta-setup.md`, then pause for manual user Meta App setup and `.env` population.
 - [x] **0.4 Environment & Monorepo Setup:** Verify tools (Node, Go, Python, Docker, FFmpeg); monorepo structure, Docker Compose with profiles, PostgreSQL, `contracts/`, CI workflows.
 - [x] **0.5 Configuration Validation:** Feature 19 (`.env` validation with Zod).
-- [ ] **0.6 Error Handling & Provider Abstraction:** Feature 17 v1 (structured logging, unified errors) and Graph API provider abstraction layer.
-- [ ] **Checkpoint 0 Confirmation**
+- [x] **0.6 Error Handling & Provider Abstraction:** Feature 17 v1 (structured logging, unified errors) and Graph API provider abstraction layer.
+- [x] **Checkpoint 0 Confirmation**
 
 ### Phase 1: Read-Only Tools (TypeScript)
 - [ ] Feature 1: Profile Info
