@@ -148,16 +148,16 @@
 - [x] Feature 15: Post Scheduling
 - [x] Media validation tests (invalid size/aspect ratio) & end-to-end publish flow test
 - [x] Prepare release v0.2 (CHANGELOG, version bump, release notes; no external publishing)
-- [ ] **Checkpoint 4 Confirmation**
+- [x] **Checkpoint 4 Confirmation**
 
 ### Phase 5: Realtime & Engagement
-- [ ] Feature 20: Go `gateway` service (signature verification, challenge handshake, rate/body limits)
-- [ ] Webhook event processor in `core-worker`
-- [ ] Feature 12: Mentions & Tags
-- [ ] Feature 14: Direct Messages
-- [ ] Feature 21: Deterministic auto-reply rules (rate-capped, audit-logged, opt-in)
-- [ ] Security tests (forged signature rejection, oversized body rejection)
-- [ ] Prepare release v0.3 (CHANGELOG, version bump, release notes; no external publishing)
+- [x] Feature 20: Go `gateway` service (signature verification, challenge handshake, rate/body limits)
+- [x] Webhook event processor in `core-worker`
+- [x] Feature 12: Mentions & Tags
+- [x] Feature 14: Direct Messages
+- [x] Feature 21: Deterministic auto-reply rules (rate-capped, audit-logged, opt-in)
+- [x] Security tests (forged signature rejection, oversized body rejection)
+- [x] Prepare release v0.3 (CHANGELOG, version bump, release notes; no external publishing)
 - [ ] **Checkpoint 5 Confirmation**
 
 ### Phase 6–9: Roadmap (On user instruction only)
