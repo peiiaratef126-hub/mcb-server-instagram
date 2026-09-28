@@ -124,11 +124,11 @@
 - [x] **Checkpoint 1 Confirmation**
 
 ### Phase 2: Comment Writes & Lite Release
-- [ ] Feature 8: Reply to Comment (2-step confirmation flow)
-- [ ] Feature 9: Hide/Delete Comment (2-step confirmation flow)
-- [ ] CLI command: `refresh-token` for Lite mode
-- [ ] Prepare release v0.1 (CHANGELOG, version bump, release notes; no external publishing)
-- [ ] **Checkpoint 2 Confirmation**
+- [x] Feature 8: Reply to Comment (2-step confirmation flow)
+- [x] Feature 9: Hide/Delete Comment (2-step confirmation flow)
+- [x] CLI command: `refresh-token` for Lite mode
+- [x] Prepare release v0.1 (CHANGELOG, version bump, release notes; no external publishing)
+- [x] **Checkpoint 2 Confirmation**
 
 ### Phase 3: Persistent Service & Go Worker
 - [ ] PostgreSQL schema & migrations (publish queue, quota counter, constraints)
