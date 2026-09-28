@@ -71,3 +71,27 @@ type InsightsSnapshot struct {
 	Metrics      []byte    `json:"metrics"`
 	CreatedAt    time.Time `json:"created_at"`
 }
+
+// WebhookEvent represents an incoming webhook event from the gateway.
+type WebhookEvent struct {
+	ID                uuid.UUID  `json:"id"`
+	EventID           *string    `json:"event_id,omitempty"`
+	Field             string     `json:"field"`
+	Payload           []byte     `json:"payload"`
+	SignatureVerified bool       `json:"signature_verified"`
+	Processed         bool       `json:"processed"`
+	ProcessedAt       *time.Time `json:"processed_at,omitempty"`
+	ErrorMessage      *string    `json:"error_message,omitempty"`
+	CreatedAt         time.Time  `json:"created_at"`
+}
+
+// AuditLog represents an immutable record of an automated action.
+type AuditLog struct {
+	ID         uuid.UUID `json:"id"`
+	AccountID  string    `json:"account_id"`
+	ActionType string    `json:"action_type"`
+	TargetID   *string   `json:"target_id,omitempty"`
+	RuleID     *string   `json:"rule_id,omitempty"`
+	Details    []byte    `json:"details"`
+	CreatedAt  time.Time `json:"created_at"`
+}

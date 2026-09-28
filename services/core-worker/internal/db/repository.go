@@ -41,4 +41,13 @@ type Repository interface {
 	SaveInsightsSnapshot(ctx context.Context, snapshot *InsightsSnapshot) error
 	GetInsightsSnapshot(ctx context.Context, accountID string, date time.Time) (*InsightsSnapshot, error)
 	ListInsightsSnapshots(ctx context.Context, accountID string, limit int) ([]*InsightsSnapshot, error)
+
+	// Webhook Events (Features 20, 21)
+	SaveWebhookEvent(ctx context.Context, event *WebhookEvent) error
+	ClaimUnprocessedWebhookEvents(ctx context.Context, batchSize int) ([]*WebhookEvent, error)
+	MarkWebhookEventProcessed(ctx context.Context, id uuid.UUID, errMsg *string) error
+
+	// Audit Logs (Feature 21)
+	SaveAuditLog(ctx context.Context, log *AuditLog) error
+	ListAuditLogs(ctx context.Context, accountID string, limit int) ([]*AuditLog, error)
 }

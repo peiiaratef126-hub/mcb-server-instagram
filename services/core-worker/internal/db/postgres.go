@@ -606,3 +606,157 @@ func (r *PostgresRepository) ListInsightsSnapshots(ctx context.Context, accountI
 	}
 	return snapshots, nil
 }
+
+// --- Webhook Events (Features 20, 21) ---
+
+func (r *PostgresRepository) SaveWebhookEvent(ctx context.Context, event *WebhookEvent) error {
+	if event.ID == uuid.Nil {
+		event.ID = uuid.New()
+	}
+	query := `
+		INSERT INTO webhook_events (id, event_id, field, payload, signature_verified, processed, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
+	`
+	_, err := r.db.ExecContext(ctx, query,
+		event.ID,
+		event.EventID,
+		event.Field,
+		event.Payload,
+		event.SignatureVerified,
+		event.Processed,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to save webhook event: %w", err)
+	}
+	return nil
+}
+
+func (r *PostgresRepository) ClaimUnprocessedWebhookEvents(ctx context.Context, batchSize int) ([]*WebhookEvent, error) {
+	if batchSize <= 0 {
+		batchSize = 20
+	}
+	query := `
+		SELECT id, event_id, field, payload, signature_verified, processed, processed_at, error_message, created_at
+		FROM webhook_events
+		WHERE processed = FALSE
+		ORDER BY created_at ASC
+		LIMIT $1
+		FOR UPDATE SKIP LOCKED
+	`
+	rows, err := r.db.QueryContext(ctx, query, batchSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query unprocessed webhook events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []*WebhookEvent
+	for rows.Next() {
+		var ev WebhookEvent
+		var eventID, errMsg sql.NullString
+		var processedAt sql.NullTime
+		if err := rows.Scan(
+			&ev.ID,
+			&eventID,
+			&ev.Field,
+			&ev.Payload,
+			&ev.SignatureVerified,
+			&ev.Processed,
+			&processedAt,
+			&errMsg,
+			&ev.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan webhook event: %w", err)
+		}
+		if eventID.Valid {
+			ev.EventID = &eventID.String
+		}
+		if errMsg.Valid {
+			ev.ErrorMessage = &errMsg.String
+		}
+		if processedAt.Valid {
+			ev.ProcessedAt = &processedAt.Time
+		}
+		events = append(events, &ev)
+	}
+	return events, nil
+}
+
+func (r *PostgresRepository) MarkWebhookEventProcessed(ctx context.Context, id uuid.UUID, errMsg *string) error {
+	query := `
+		UPDATE webhook_events
+		SET processed = TRUE, processed_at = NOW(), error_message = $2
+		WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, query, id, errMsg)
+	if err != nil {
+		return fmt.Errorf("failed to mark webhook event processed: %w", err)
+	}
+	return nil
+}
+
+// --- Audit Logs (Feature 21) ---
+
+func (r *PostgresRepository) SaveAuditLog(ctx context.Context, log *AuditLog) error {
+	if log.ID == uuid.Nil {
+		log.ID = uuid.New()
+	}
+	query := `
+		INSERT INTO audit_logs (id, account_id, action_type, target_id, rule_id, details, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
+	`
+	_, err := r.db.ExecContext(ctx, query,
+		log.ID,
+		log.AccountID,
+		log.ActionType,
+		log.TargetID,
+		log.RuleID,
+		log.Details,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to save audit log: %w", err)
+	}
+	return nil
+}
+
+func (r *PostgresRepository) ListAuditLogs(ctx context.Context, accountID string, limit int) ([]*AuditLog, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	query := `
+		SELECT id, account_id, action_type, target_id, rule_id, details, created_at
+		FROM audit_logs
+		WHERE account_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2
+	`
+	rows, err := r.db.QueryContext(ctx, query, accountID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query audit logs: %w", err)
+	}
+	defer rows.Close()
+
+	var logs []*AuditLog
+	for rows.Next() {
+		var l AuditLog
+		var targetID, ruleID sql.NullString
+		if err := rows.Scan(
+			&l.ID,
+			&l.AccountID,
+			&l.ActionType,
+			&targetID,
+			&ruleID,
+			&l.Details,
+			&l.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan audit log: %w", err)
+		}
+		if targetID.Valid {
+			l.TargetID = &targetID.String
+		}
+		if ruleID.Valid {
+			l.RuleID = &ruleID.String
+		}
+		logs = append(logs, &l)
+	}
+	return logs, nil
+}

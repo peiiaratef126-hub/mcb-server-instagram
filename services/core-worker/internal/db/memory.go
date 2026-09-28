@@ -13,19 +13,23 @@ import (
 type MemoryRepository struct {
 	mu sync.Mutex
 
-	tokens    map[string]*AccessToken
-	queue     map[uuid.UUID]*PublishJob
-	quotas    map[string]*DailyQuota // key: accountID + ":" + YYYY-MM-DD
-	snapshots map[string]*InsightsSnapshot // key: accountID + ":" + YYYY-MM-DD
+	tokens        map[string]*AccessToken
+	queue         map[uuid.UUID]*PublishJob
+	quotas        map[string]*DailyQuota // key: accountID + ":" + YYYY-MM-DD
+	snapshots     map[string]*InsightsSnapshot // key: accountID + ":" + YYYY-MM-DD
+	webhookEvents map[uuid.UUID]*WebhookEvent
+	auditLogs     []*AuditLog
 }
 
 // NewMemoryRepository initializes an empty in-memory repository.
 func NewMemoryRepository() *MemoryRepository {
 	return &MemoryRepository{
-		tokens:    make(map[string]*AccessToken),
-		queue:     make(map[uuid.UUID]*PublishJob),
-		quotas:    make(map[string]*DailyQuota),
-		snapshots: make(map[string]*InsightsSnapshot),
+		tokens:        make(map[string]*AccessToken),
+		queue:         make(map[uuid.UUID]*PublishJob),
+		quotas:        make(map[string]*DailyQuota),
+		snapshots:     make(map[string]*InsightsSnapshot),
+		webhookEvents: make(map[uuid.UUID]*WebhookEvent),
+		auditLogs:     make([]*AuditLog, 0),
 	}
 }
 
@@ -331,6 +335,105 @@ func (m *MemoryRepository) ListInsightsSnapshots(ctx context.Context, accountID 
 
 	sort.Slice(res, func(i, j int) bool {
 		return res[i].SnapshotDate.After(res[j].SnapshotDate)
+	})
+
+	if len(res) > limit {
+		res = res[:limit]
+	}
+	return res, nil
+}
+
+// --- Webhook Events (Features 20, 21) ---
+
+func (m *MemoryRepository) SaveWebhookEvent(ctx context.Context, event *WebhookEvent) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if event.ID == uuid.Nil {
+		event.ID = uuid.New()
+	}
+	if event.CreatedAt.IsZero() {
+		event.CreatedAt = time.Now().UTC()
+	}
+	cpy := *event
+	m.webhookEvents[event.ID] = &cpy
+	return nil
+}
+
+func (m *MemoryRepository) ClaimUnprocessedWebhookEvents(ctx context.Context, batchSize int) ([]*WebhookEvent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if batchSize <= 0 {
+		batchSize = 20
+	}
+	var res []*WebhookEvent
+	for _, ev := range m.webhookEvents {
+		if !ev.Processed {
+			cpy := *ev
+			res = append(res, &cpy)
+		}
+	}
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].CreatedAt.Before(res[j].CreatedAt)
+	})
+
+	if len(res) > batchSize {
+		res = res[:batchSize]
+	}
+	return res, nil
+}
+
+func (m *MemoryRepository) MarkWebhookEventProcessed(ctx context.Context, id uuid.UUID, errMsg *string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	ev, exists := m.webhookEvents[id]
+	if !exists {
+		return ErrNotFound
+	}
+	ev.Processed = true
+	now := time.Now().UTC()
+	ev.ProcessedAt = &now
+	ev.ErrorMessage = errMsg
+	return nil
+}
+
+// --- Audit Logs (Feature 21) ---
+
+func (m *MemoryRepository) SaveAuditLog(ctx context.Context, log *AuditLog) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if log.ID == uuid.Nil {
+		log.ID = uuid.New()
+	}
+	if log.CreatedAt.IsZero() {
+		log.CreatedAt = time.Now().UTC()
+	}
+	cpy := *log
+	m.auditLogs = append(m.auditLogs, &cpy)
+	return nil
+}
+
+func (m *MemoryRepository) ListAuditLogs(ctx context.Context, accountID string, limit int) ([]*AuditLog, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if limit <= 0 {
+		limit = 50
+	}
+	var res []*AuditLog
+	for _, l := range m.auditLogs {
+		if l.AccountID == accountID {
+			cpy := *l
+			res = append(res, &cpy)
+		}
+	}
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].CreatedAt.After(res[j].CreatedAt)
 	})
 
 	if len(res) > limit {
