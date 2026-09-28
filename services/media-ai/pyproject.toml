@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcb-media-ai"
-version = "0.1.0a0"
+version = "0.2.0a0"
 description = "Media validation, FFmpeg conversion, and AI processing service for MCB Server Instagram"
 readme = "README.md"
 requires-python = ">=3.11"
