@@ -19,7 +19,7 @@ import (
 
 const (
 	ServiceName = "gateway"
-	Version     = "0.2.0-alpha.0"
+	Version     = "0.3.0-alpha.0"
 )
 
 func main() {

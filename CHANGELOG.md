@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-09-28
+
+### Added
+- **Edge Webhook Gateway Service (`services/gateway`)**:
+  - Zero-token architecture: Internet-facing service operates without Instagram Access Tokens in its environment or memory.
+  - Implements Meta `hub.challenge` verification handshake (`GET /webhook`).
+  - Strict HMAC-SHA256 signature verification (`POST /webhook`) using `crypto/subtle.ConstantTimeCompare` against `META_APP_SECRET`.
+  - Body size limitation enforcing max 256KB with HTTP 413 Payload Too Large rejections.
+  - Persists verified incoming events into `webhook_events` PostgreSQL queue table.
+- **Asynchronous Webhook Event Dispatcher (`services/core-worker`)**:
+  - Polling worker loop claiming unprocessed webhook events with atomic state transitions.
+  - Parses and dispatches Instagram comment changes, mentions, and incoming direct messages.
+- **Engagement & Realtime MCP Tools (TypeScript / Lite & Full Modes)**:
+  - `get_user_tags` (Feature 12): Inspect media items where the account was tagged by external users.
+  - `get_mentions` (Feature 12): Inspect comments and media where the account was mentioned.
+  - `list_conversations` (Feature 14): List direct message conversation threads.
+  - `get_conversation_messages` (Feature 14): Retrieve message history within a conversation thread.
+  - `preview_send_dm` & `execute_send_dm` (Feature 14): Two-step confirmation flow with single-use cryptographic tokens to dispatch Instagram Direct Messages.
+- **Deterministic Auto-Reply Rules Engine (Feature 21)**:
+  - Strict security: Disabled by default (`AUTO_REPLY_ENABLED=false`).
+  - Rule-based only: Deterministic keyword matching and regular expressions without LLM invocation.
+  - Per-rule, per-user sliding window rate capping (default: max 5 replies/hour per user).
+  - Immutable execution audit logs recorded in `audit_logs` table for every automated write.
+- **Webhook Architecture & Tunneling Guide**:
+  - Comprehensive documentation in `docs/webhooks.md` covering Cloudflare Tunnels, ngrok, reverse proxy setup, and Meta webhook subscriptions.
+
+### Security
+- External user-generated content from comments, mentions, tags, and direct messages is quarantined as untrusted data with explicit warnings.
+- Auto-replies are strictly opt-in and rate-capped to eliminate spam and infinite reply loops.
+- Forged webhook signatures and oversized requests are rejected at the edge before any database interaction.
+
 ## [0.2.0] - 2026-09-28
 
 ### Added
