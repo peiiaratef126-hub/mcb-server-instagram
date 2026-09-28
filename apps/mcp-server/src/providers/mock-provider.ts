@@ -111,6 +111,65 @@ export const FIXTURES = {
   deleteResponse: {
     success: true,
   },
+  tags: {
+    data: [
+      {
+        id: "17900000000000009",
+        caption: "Loved collaborating with @official_brand_test on this!",
+        media_type: "IMAGE",
+        media_url: "https://scontent.cdninstagram.com/v/sample_tagged.jpg",
+        permalink: "https://www.instagram.com/p/DA999999999/",
+        timestamp: "2026-09-27T10:00:00+0000",
+        username: "partner_brand",
+        like_count: 85,
+        comments_count: 14,
+      },
+    ],
+  },
+  mentions: {
+    mentioned_comment: {
+      id: "17988888888888899",
+      text: "Hey @official_brand_test check your DM please!",
+      timestamp: "2026-09-27T11:00:00+0000",
+      media: { id: "17900000000000001" },
+    },
+    mentioned_media: {
+      id: "17900000000000009",
+      caption: "Shoutout to @official_brand_test!",
+      media_type: "IMAGE",
+      permalink: "https://www.instagram.com/p/DA999999999/",
+      timestamp: "2026-09-27T10:00:00+0000",
+    },
+  },
+  conversations: {
+    data: [
+      {
+        id: "t_17841411111111111",
+        updated_time: "2026-09-27T12:00:00+0000",
+        participants: {
+          data: [
+            { id: "17841411111111111", username: "fan_customer" },
+            { id: "17841400000000000", username: "official_brand_test" },
+          ],
+        },
+      },
+    ],
+  },
+  conversationMessages: {
+    data: [
+      {
+        id: "m_msg12345",
+        created_time: "2026-09-27T12:00:00+0000",
+        from: { id: "17841411111111111", username: "fan_customer" },
+        to: { data: [{ id: "17841400000000000", username: "official_brand_test" }] },
+        message: "Hello! Do you ship internationally?",
+      },
+    ],
+  },
+  sendMessageResponse: {
+    recipient_id: "17841411111111111",
+    message_id: "m_msg_sent_9999",
+  },
 };
 
 export class MockInstagramGraphProvider implements InstagramGraphProvider {
@@ -144,6 +203,11 @@ export class MockInstagramGraphProvider implements InstagramGraphProvider {
 
     const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
 
+    // Match mentions
+    if (cleanEndpoint === this.accountId && options?.params?.fields && String(options.params.fields).includes("mentioned_")) {
+      return FIXTURES.mentions as T;
+    }
+
     // Match account profile
     if (cleanEndpoint === this.accountId || cleanEndpoint === "me") {
       return FIXTURES.profile as T;
@@ -174,6 +238,26 @@ export class MockInstagramGraphProvider implements InstagramGraphProvider {
       return FIXTURES.postInsights as T;
     }
 
+    // Match tags
+    if (cleanEndpoint === `${this.accountId}/tags` || cleanEndpoint.endsWith("/tags")) {
+      return FIXTURES.tags as T;
+    }
+
+    // Match mentions
+    if (cleanEndpoint === this.accountId && options?.params?.fields && String(options.params.fields).includes("mentioned_")) {
+      return FIXTURES.mentions as T;
+    }
+
+    // Match conversations
+    if (cleanEndpoint === `${this.accountId}/conversations` || cleanEndpoint.endsWith("/conversations")) {
+      return FIXTURES.conversations as T;
+    }
+
+    // Match conversation messages
+    if (cleanEndpoint.includes("/messages")) {
+      return FIXTURES.conversationMessages as T;
+    }
+
     throw new InstagramApiError(`Mock endpoint not found: ${endpoint}`, { status: 404, code: 803 });
   }
 
@@ -186,6 +270,10 @@ export class MockInstagramGraphProvider implements InstagramGraphProvider {
 
     if (endpoint.includes("/comments")) {
       return FIXTURES.replyCommentResponse as T;
+    }
+
+    if (endpoint.includes("/messages")) {
+      return FIXTURES.sendMessageResponse as T;
     }
 
     return { success: true, id: "17999999999999999" } as T;
