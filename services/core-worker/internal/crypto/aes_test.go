@@ -84,14 +84,26 @@ func TestGCMEncryptor_TamperDetection(t *testing.T) {
 	}
 
 	// Tamper with ciphertext by corrupting characters
-	tamperedCt := "A" + ct[1:]
+	tamperedCtBytes := []byte(ct)
+	if tamperedCtBytes[0] == 'A' {
+		tamperedCtBytes[0] = 'B'
+	} else {
+		tamperedCtBytes[0] = 'A'
+	}
+	tamperedCt := string(tamperedCtBytes)
 	_, err = encryptor.DecryptString(tamperedCt, nonce)
 	if err == nil {
 		t.Fatalf("expected error on tampered ciphertext, got nil")
 	}
 
 	// Tamper with nonce
-	tamperedNonce := "B" + nonce[1:]
+	tamperedNonceBytes := []byte(nonce)
+	if tamperedNonceBytes[0] == 'B' {
+		tamperedNonceBytes[0] = 'C'
+	} else {
+		tamperedNonceBytes[0] = 'B'
+	}
+	tamperedNonce := string(tamperedNonceBytes)
 	_, err = encryptor.DecryptString(ct, tamperedNonce)
 	if err == nil {
 		t.Fatalf("expected error on tampered nonce, got nil")
