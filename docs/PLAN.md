@@ -172,8 +172,15 @@
 - [x] Feature 22: AI Caption & Hashtag Generator (`media_ai/ai/caption_generator.py` & TypeScript tool `generate_caption_and_hashtags`, gated by `ANTHROPIC_API_KEY`)
 - [x] Expose all 3 tools on MCP server entrypoint (`apps/mcp-server/src/server.ts`, total 30 registered MCP tools)
 - [x] Unit test suites passing: Python (25/25 passed), TypeScript (90/90 passed)
-- [ ] **Checkpoint 7 Confirmation**
+- [x] **Checkpoint 7 Confirmation**
 
-### Phase 8–9: Roadmap (On user instruction only)
-- [ ] Phase 8: Feature 26 (Web dashboard)
+### Phase 8: Lightweight Web Dashboard (TypeScript)
+- [x] Feature 26: Embedded self-hosted web dashboard server (`apps/mcp-server/src/dashboard/index.ts`)
+- [x] Modern responsive UI with glassmorphic dark theme (`template.ts`)
+- [x] Views: Account Overview, Daily Meta Quotas, Best Time 7x24 Heatmap, Publish Queue Status, Audit Logs
+- [x] Strict Zero-Token Security sanitizer (`data-provider.ts`) preventing secret exposure in DOM/API payloads
+- [x] Comprehensive unit tests (6/6 passing in `dashboard.test.ts`, 96 total in `apps/mcp-server`)
+- [ ] **Checkpoint 8 Confirmation**
+
+### Phase 9: Roadmap (On user instruction only)
 - [ ] Phase 9: v1.0 Polish, Docker images build-check, `CONTRIBUTING.md`
