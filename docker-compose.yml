@@ -79,9 +79,14 @@ services:
     depends_on:
       core-worker:
         condition: service_started
+    ports:
+      - "3000:3000"
     environment:
       APP_ENV: ${APP_ENV:-development}
       RUN_MODE: full
+      PORT: ${PORT:-3000}
+      DASHBOARD_ENABLED: ${DASHBOARD_ENABLED:-true}
+      DASHBOARD_PORT: ${DASHBOARD_PORT:-3000}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/mcb_instagram}
       INSTAGRAM_ACCOUNT_ID: ${INSTAGRAM_ACCOUNT_ID:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
