@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-09-29
+
+### Added
+- **Discovery & Competitor Intelligence (Features 13 & 25)**:
+  - `search_hashtag`: Resolves public hashtag strings to Meta Graph API hashtag IDs.
+  - `get_hashtag_media`: Fetches top or recent public media objects associated with a hashtag.
+  - `get_competitor_profile`: Queries public business or creator profiles and recent media using the Business Discovery API without requiring competitor account credentials.
+- **AI & Content Optimization (Features 22, 23 & 24)**:
+  - `get_best_time_to_post`: Analyzes historical post reach, impressions, and engagement to generate a 7×24 day-and-hour heatmap and ranked recommendations for optimal publishing windows.
+  - `analyze_comment_sentiment`: Claude-powered comment sentiment classifier with specialized Arabic dialect understanding (Egyptian, Gulf, Levantine, Maghrebi) alongside global languages.
+  - `generate_caption_and_hashtags`: Multi-tone caption generator creating engaging hooks, localized hashtags, and calls-to-action tailored to Instagram audiences.
+- **Embedded Web Dashboard (Feature 26)**:
+  - Lightweight, zero-external-dependency web dashboard at `http://localhost:3000/dashboard` featuring glassmorphic dark UI.
+  - Live SVG quota usage gauges for Meta Graph API limits, publishing limits, and messaging limits.
+  - Real-time publish queue job monitoring table.
+  - Interactive 7×24 posting heatmap grid with hover tooltips and score ranking.
+  - Recursive payload sanitization engine ensuring zero secrets, tokens, or nonces leak into browser DOM or API responses.
+  - Strict security headers (`Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`).
+- **Production Operations & Documentation (Phase 9)**:
+  - Comprehensive 30 MCP tools permission matrix and mode mappings in `docs/meta-setup.md`.
+  - Production deployment guide in `docs/deployment.md` covering Lite and Full modes, Docker Compose, and Cloudflare Tunnel / Caddy webhook routing.
+  - Formal contributing guide in `CONTRIBUTING.md` detailing coding standards, atomic commit rules, and multi-language test execution.
+  - Finalized root `README.md` with system architecture diagrams, quickstarts, and security disclosures.
+
+### Security
+- Complete test suite validation across TypeScript (96 tests), Python (25 tests), and Go (100% pass) with 0 regressions.
+- All 30 MCP tools enforce explicit read-only, idempotent, or destructive annotations.
+- Full two-step cryptographic confirmation architecture enforced across all 6 mutation actions.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

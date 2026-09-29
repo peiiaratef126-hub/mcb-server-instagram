@@ -18,7 +18,7 @@ import (
 
 const (
 	ServiceName = "core-worker"
-	Version     = "0.3.0-alpha.0"
+	Version     = "1.0.0"
 )
 
 func main() {

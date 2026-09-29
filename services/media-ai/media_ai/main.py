@@ -3,7 +3,7 @@
 import sys
 
 SERVICE_NAME = "media-ai"
-VERSION = "0.1.0a0"
+VERSION = "1.0.0"
 
 
 def get_status() -> dict:

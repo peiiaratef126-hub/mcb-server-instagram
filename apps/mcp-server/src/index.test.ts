@@ -9,7 +9,7 @@ describe("MCP Server Integration (Phase 1 & Phase 2)", () => {
 
     expect(server).toBeDefined();
     expect(SERVER_NAME).toBe("mcb-server-instagram");
-    expect(SERVER_VERSION).toBe("0.3.0");
+    expect(SERVER_VERSION).toBe("1.0.0");
   });
 
   it("should register all read and write tools with appropriate MCP tool annotations", () => {

@@ -84,7 +84,7 @@ import {
 import { BaseError } from "./errors/index.js";
 
 export const SERVER_NAME = "mcb-server-instagram";
-export const SERVER_VERSION = "0.3.0";
+export const SERVER_VERSION = "1.0.0";
 
 function formatErrorResponse(error: unknown): { content: Array<{ type: "text"; text: string }>; isError: true } {
   logger.error("Tool execution failed", { error: error instanceof Error ? error.message : String(error) });
