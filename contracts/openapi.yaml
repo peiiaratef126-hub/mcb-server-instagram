@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: MCB Server Instagram Internal & Gateway API
   description: Canonical OpenAPI contract and data schemas for MCB Server Instagram microservices.
-  version: 0.1.0-alpha.0
+  version: 1.0.0
 
 servers:
   - url: http://localhost:8080
