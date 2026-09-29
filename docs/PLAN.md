@@ -180,7 +180,14 @@
 - [x] Views: Account Overview, Daily Meta Quotas, Best Time 7x24 Heatmap, Publish Queue Status, Audit Logs
 - [x] Strict Zero-Token Security sanitizer (`data-provider.ts`) preventing secret exposure in DOM/API payloads
 - [x] Comprehensive unit tests (6/6 passing in `dashboard.test.ts`, 96 total in `apps/mcp-server`)
-- [ ] **Checkpoint 8 Confirmation**
+- [x] **Checkpoint 8 Confirmation**
 
-### Phase 9: Roadmap (On user instruction only)
-- [ ] Phase 9: v1.0 Polish, Docker images build-check, `CONTRIBUTING.md`
+### Phase 9: v1.0 Polish & Production Readiness
+- [x] Comprehensive 30 MCP tools permission matrix in `docs/meta-setup.md`
+- [x] Production deployment guide in `docs/deployment.md` (Lite vs Full modes, Docker Compose, Cloudflare Tunnel / Caddy)
+- [x] Docker configurations and layer caching optimizations finalized across all multi-stage Dockerfiles and `docker-compose.yml`
+- [x] Contributing guidelines authored in `CONTRIBUTING.md`
+- [x] Finalized root `README.md` with complete architecture diagrams, quickstarts, and security disclosures
+- [x] Milestone v1.0.0 release prepared across all packages and services, changelog updated, release notes drafted in `docs/releases/v1.0.0.md`
+- [x] Full test suites and CI matrices verified green across all 4 runtimes (TypeScript, Go, Python, Contracts)
+- [x] **v1.0 Milestone 100% Completed**
