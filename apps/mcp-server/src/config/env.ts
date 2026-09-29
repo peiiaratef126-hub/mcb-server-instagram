@@ -22,6 +22,8 @@ export const rawEnvSchema = z
     RUN_MODE: RunModeSchema.default("lite"),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
     LOG_LEVEL: LogLevelSchema.default("info"),
+    DASHBOARD_ENABLED: z.coerce.boolean().default(false),
+    DASHBOARD_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
 
     // Instagram credentials
     INSTAGRAM_ACCOUNT_ID: z

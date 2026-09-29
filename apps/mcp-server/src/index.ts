@@ -11,6 +11,7 @@ import { createMcpServer, SERVER_NAME, SERVER_VERSION } from "./server.js";
 import { logger } from "./utils/logger.js";
 
 export { createMcpServer, SERVER_NAME, SERVER_VERSION };
+export { startDashboard, createDashboardServer } from "./dashboard/index.js";
 
 export async function main() {
   const config = getConfig();
@@ -52,6 +53,15 @@ export async function main() {
 
   await server.connect(transport);
   logger.info(`${SERVER_NAME} connected to stdio transport and ready for tool calls.`);
+
+  if (config.DASHBOARD_ENABLED) {
+    const { startDashboard: runDashboard } = await import("./dashboard/index.js");
+    await runDashboard(provider, {
+      port: config.DASHBOARD_PORT,
+      mode: config.RUN_MODE,
+      workerUrl: config.WORKER_URL,
+    });
+  }
 }
 
 // Auto-run if executed directly as main module
