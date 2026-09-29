@@ -37,28 +37,51 @@ The official Meta Graph API requires an **Instagram Professional Account** (Busi
 
 ---
 
-## 3. Required Permissions (Scopes)
+## 3. Required Permissions (Scopes) & Tool Permission Matrix
 
-Depending on which features and run modes you plan to use, your token must include specific scopes:
+Depending on which features and run modes you plan to use, your Meta access token must include specific scopes. Below is the comprehensive permission mapping for all 30 MCP tools registered in `mcb-server-instagram`.
 
-### Lite Mode / Read Operations (Features 1, 2, 3, 7, 10, 11)
-- `instagram_basic`: Read profile info, media list, and permalinks.
-- `pages_show_list`: Enumerate Facebook Pages linked to the authenticated user.
-- `pages_read_engagement`: Read basic engagement data and verify page ownership.
-- `instagram_manage_insights`: Retrieve post-level and account-level metrics/insights.
+### Operational Modes Overview
+- **Lite Mode:** Direct MCP server execution via stdio or SSE without external databases or daemon workers. Supports all read tools, analytical/AI tools, and two-step human-in-the-loop preview/execute publishing/moderation.
+- **Full Mode:** Enterprise production deployment featuring the Go background worker (`core-worker`), edge webhook gateway (`gateway`), Python media optimizer (`media-ai`), and PostgreSQL persistence for rate quotas, encryption key management, and asynchronous job queuing.
 
-### Comment Moderation (Features 8, 9, 21)
-- `instagram_manage_comments`: Reply to comments, hide comments, and delete comments.
+### Comprehensive 30 MCP Tools Permission Matrix
 
-### Full Mode Publishing & Scheduling (Features 4, 5, 6, 15)
-- `instagram_content_publish`: Upload media containers and publish single images, videos, Reels, and carousels.
-
-### Realtime Webhooks & Direct Messages (Features 12, 14, 20)
-- `instagram_manage_messages`: Read and respond to Instagram Direct Messages.
-- `pages_manage_metadata`: Subscribe your Facebook Page and Instagram Account to webhook events.
+| # | MCP Tool Name | Required Meta Graph API Scope(s) | Mode | Read/Destructive Hint | Function / Target Endpoint |
+|---|---------------|----------------------------------|------|-----------------------|----------------------------|
+| 1 | `get_profile_info` | `instagram_basic`, `pages_show_list` | Lite & Full | Read-Only | Retrieves IG account bio, profile picture, follower/following count, and media tally (`GET /{ig-user-id}`). |
+| 2 | `get_recent_posts` | `instagram_basic` | Lite & Full | Read-Only | Lists recent media objects with pagination, timestamps, likes, and captions (`GET /{ig-user-id}/media`). |
+| 3 | `get_post_details` | `instagram_basic` | Lite & Full | Read-Only | Queries detailed metadata for a specific post or reel (`GET /{media-id}`). |
+| 4 | `list_comments` | `instagram_basic` | Lite & Full | Read-Only | Lists top-level comments and comment threads on a media object (`GET /{media-id}/comments`). |
+| 5 | `get_account_insights` | `instagram_manage_insights`, `instagram_basic` | Lite & Full | Read-Only | Aggregates daily/weekly reach, impressions, profile views, and audience demographics (`GET /{ig-user-id}/insights`). |
+| 6 | `get_post_insights` | `instagram_manage_insights`, `instagram_basic` | Lite & Full | Read-Only | Retrieves per-post metrics: impressions, reach, engagement, saves, and video views (`GET /{media-id}/insights`). |
+| 7 | `preview_reply_comment` | *None (Local confirmation)* | Lite & Full | Read-Only | Validates reply text and issues cryptographic two-step confirmation token. |
+| 8 | `execute_reply_comment` | `instagram_manage_comments` | Lite & Full | Destructive / Mutation | Posts verified reply to specified comment thread (`POST /{comment-id}/replies`). |
+| 9 | `preview_modify_comment` | *None (Local confirmation)* | Lite & Full | Read-Only | Validates moderation action (hide/unhide/delete) and generates confirmation token. |
+| 10 | `execute_modify_comment` | `instagram_manage_comments` | Lite & Full | Destructive / Mutation | Hides/unhides (`POST /{comment-id}?hide=true\|false`) or deletes (`DELETE /{comment-id}`) a comment. |
+| 11 | `preview_publish_image` | *None (Local confirmation)* | Lite & Full | Read-Only | Inspects image URL and caption, validates aspect ratio, and generates confirmation token. |
+| 12 | `execute_publish_image` | `instagram_content_publish` | Lite & Full | Destructive / Mutation | Creates media container and publishes single photo (`POST /{ig-user-id}/media` & `POST /{ig-user-id}/media_publish`). |
+| 13 | `preview_publish_video` | *None (Local confirmation)* | Lite & Full | Read-Only | Validates video URL/Reel parameters, duration, and generates confirmation token. |
+| 14 | `execute_publish_video` | `instagram_content_publish` | Lite & Full | Destructive / Mutation | Initiates video/Reel container creation and publishes upon readiness (`media_type=REELS`). |
+| 15 | `preview_publish_carousel` | *None (Local confirmation)* | Lite & Full | Read-Only | Validates carousel item list (2-10 items) and generates confirmation token. |
+| 16 | `execute_publish_carousel` | `instagram_content_publish` | Lite & Full | Destructive / Mutation | Uploads child containers and publishes multi-item carousel (`media_type=CAROUSEL`). |
+| 17 | `preview_schedule_post` | *None (Local confirmation)* | Lite & Full | Read-Only | Checks scheduled timestamp against 15m - 75d Meta window and creates confirmation token. |
+| 18 | `execute_schedule_post` | `instagram_content_publish` | Full (DB Queue) | Destructive / Mutation | Enqueues post in PostgreSQL `publish_queue` for Go worker dispatch at scheduled time. |
+| 19 | `get_user_tags` | `instagram_basic` | Lite & Full | Read-Only | Lists photos and reels where the account is tagged (`GET /{ig-user-id}/tags`). |
+| 20 | `get_mentions` | `instagram_basic`, `instagram_manage_comments` | Lite & Full | Read-Only | Retrieves public captions and comments that mention the business handle (`GET /{ig-user-id}?fields=mentioned_media,mentioned_comment`). |
+| 21 | `list_conversations` | `instagram_manage_messages` | Lite & Full | Read-Only | Queries active Instagram Direct Message conversation threads (`GET /{ig-user-id}/conversations`). |
+| 22 | `get_conversation_messages` | `instagram_manage_messages` | Lite & Full | Read-Only | Retrieves message chronology for a specific conversation thread (`GET /{conversation-id}/messages`). |
+| 23 | `preview_send_dm` | *None (Local confirmation)* | Lite & Full | Read-Only | Validates direct message recipient, payload, and generates confirmation token. |
+| 24 | `execute_send_dm` | `instagram_manage_messages` | Lite & Full | Destructive / Mutation | Dispatches direct message to recipient within Meta 24-hour messaging window (`POST /{ig-user-id}/messages`). |
+| 25 | `search_hashtag` | `instagram_basic` | Lite & Full | Read-Only | Queries Meta Graph API to resolve a hashtag string to an official ID (`GET /ig_hashtag_search?q={hashtag}`). |
+| 26 | `get_hashtag_media` | `instagram_basic` | Lite & Full | Read-Only | Returns top or recent public posts tagged with specified hashtag (`GET /{hashtag-id}/top_media` or `recent_media`). |
+| 27 | `get_competitor_profile` | `instagram_basic` | Lite & Full | Read-Only | Discovers public competitor/creator profile and media via Business Discovery API (`GET /{ig-user-id}?fields=business_discovery.username({target})`). |
+| 28 | `get_best_time_to_post` | `instagram_basic`, `instagram_manage_insights` | Lite & Full | Read-Only | Computes 7×24 historical engagement heatmap and returns optimal ranked posting time slots. |
+| 29 | `analyze_comment_sentiment` | *None (Claude API / Local)* | Lite & Full | Read-Only | Classifies comment sentiment (positive, neutral, negative, urgent) with Arabic dialect support. |
+| 30 | `generate_caption_and_hashtags` | *None (Claude API / Local)* | Lite & Full | Read-Only | Generates engaging multilingual captions, hashtags, and call-to-actions based on post brief. |
 
 > [!NOTE]
-> During development, while your app is in **Development Mode**, permissions only work for accounts that have an assigned role (Admin, Developer, or Tester) in the Meta App Dashboard (**App Roles** > **Roles**).
+> During development, while your app is in **Development Mode**, permissions only work for accounts that have an assigned role (Admin, Developer, or Tester) in the Meta App Dashboard (**App Roles** > **Roles**). Webhooks and Messaging in Development Mode only trigger for designated tester accounts.
 
 ---
 
